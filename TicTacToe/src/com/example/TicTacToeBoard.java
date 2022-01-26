@@ -16,6 +16,7 @@ public class TicTacToeBoard {
 
   // From https://www.geeksforgeeks.org/validity-of-a-given-tic-tac-toe-board-configuration/
   private static final int[][] WIN_COMBINATIONS = {
+      {0, 1, 2},
       {3, 4, 5}, // Check second Row
       {6, 7, 8}, // Check third Row
       {0, 3, 6}, // Check first column
