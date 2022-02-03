@@ -137,7 +137,7 @@ public class NewMexicoHistoricalFeatures {
   }
 
   /**
-   * Helper function that determines whether or not a Double value is roughly equal to zero
+   * Helper function that determines whether a Double value is roughly equal to zero
    *
    * @param number, a Double for the value you want to check
    * @return True if number is roughly equal to zero, False if not

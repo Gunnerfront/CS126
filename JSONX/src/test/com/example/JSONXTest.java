@@ -5,6 +5,10 @@ import com.google.gson.Gson;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -14,51 +18,25 @@ import static org.junit.Assert.assertEquals;
 public class JSONXTest {
     private Gson gson;
 
-    private static final String myJson = "{" +
-        "\"features\": [{" +
-        "    \"geometry\": {" +
-        "      \"type\": \"Point\"," +
-        "      \"coordinates\": [-107.3175179999999, 32.22536869999996]" +
-        "       }," +
-        "    \"type\": \"Feature\"," +
-        "    \"properties\": {" +
-        "      \"DATE_CREAT\": \"1993/08/01\"," +
-        "      \"PRIM_LONG1\": -107.317518," +
-        "      \"STATE_ALPH\": \"NM\"," +
-        "      \"ELEVATION\": 1286.0," +
-        "      \"PRIMARY_LA\": \"321331N\"," +
-        "      \"FEATURE_CL\": \"Post Office\"," +
-        "      \"observed\": \"\"," +
-        "      \"SOURCE_LAT\": \"\"," +
-        "      \"FEATURE_NA\": \"Cambray Post Office (historical)\"," +
-        "      \"PRIM_LONG_\": \"1071903W\"," +
-        "      \"id\": 8361479," +
-        "      \"FEATURE_ID\": 937222.0," +
-        "      \"SOURCE_L_2\": \"\"," +
-        "      \"STATE_NUME\": 35.0," +
-        "      \"MAP_NAME\": \"Cambray\"," +
-        "      \"COUNTY_NAM\": \"Luna\"," +
-        "      \"DATE_EDITE\": \"\"," +
-        "      \"SOURCE_LON\": \"\"," +
-        "      \"COUNTY_NUM\": 29.0," +
-        "      \"SOURCE_L_1\": \"\"," +
-        "      \"PRIM_LAT_D\": 32.225369" +
-        "       }" +
-        "   ]" +
-        "  }";
+    private Reader reader;
 
     @Before
     public void setUp() {
         // reset the Gson parser before every test
         gson = new Gson();
+        try {
+            reader = Files.newBufferedReader(Paths.get("src/main/java/com/example/NM_Historical_Features.json"));
+        } catch (Exception e) {
+            System.out.println("Could not open JSON file.");
+        }
     }
 
     @Test
-    public void test_JSONStringFormat() {
+    public void test_JSONFileOpening() {
         Boolean correctJSON = true;
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
-                gson.fromJson(myJson, NewMexicoHistoricalFeatures.class);
+                gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
         } catch ( Exception e ) {
             correctJSON = false;
         }
@@ -69,7 +47,7 @@ public class JSONXTest {
     public void test_findFeaturesInCountyLunaCounty() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
-                gson.fromJson(myJson, NewMexicoHistoricalFeatures.class);
+                gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
             List<HistoricalFeature> lunaFeatures = newMexicoHistoricalFeatures.findFeaturesInCounty("Luna");
 
             assertEquals(lunaFeatures.size(), 57);
@@ -83,7 +61,7 @@ public class JSONXTest {
     public void test_findFeaturesInCountyRioArribaCounty() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
-                gson.fromJson(myJson, NewMexicoHistoricalFeatures.class);
+                gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
             List<HistoricalFeature> rioArribaFeatures = newMexicoHistoricalFeatures.findFeaturesInCounty("Rio Arriba");
 
             assertEquals(rioArribaFeatures.size(), 100);
@@ -97,7 +75,7 @@ public class JSONXTest {
     public void test_findLocatableFeatures() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
-                gson.fromJson(myJson, NewMexicoHistoricalFeatures.class);
+                gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
             List<HistoricalFeature> locatableFeatures = newMexicoHistoricalFeatures.findLocatableFeatures();
 
             assertEquals(locatableFeatures.size(), 795);
@@ -111,7 +89,7 @@ public class JSONXTest {
     public void test_findFeaturesAddedInYearRange() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
-                gson.fromJson(myJson, NewMexicoHistoricalFeatures.class);
+                gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
             List<HistoricalFeature> featuresInRange =
                 newMexicoHistoricalFeatures.findFeaturesAddedInYearRange(1980, 1981);
 
@@ -126,13 +104,14 @@ public class JSONXTest {
     public void test_findNearbyFeaturesClose() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
-                gson.fromJson(myJson, NewMexicoHistoricalFeatures.class);
+                gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
             List<HistoricalFeature> nearbyFeatures =
                 newMexicoHistoricalFeatures.findNearbyFeatures(-106.0, 35.0, 5.0);
 
             assertEquals(nearbyFeatures.size(), 1);
 
         } catch ( Exception e ) {
+            System.out.println(e);
             assertEquals(true, false);
         }
     }
@@ -141,7 +120,7 @@ public class JSONXTest {
     public void test_findNearbyFeaturesAllKnownLocations() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
-                gson.fromJson(myJson, NewMexicoHistoricalFeatures.class);
+                gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
             List<HistoricalFeature> nearbyFeatures =
                 newMexicoHistoricalFeatures.findNearbyFeatures(-106.0, 35.0, 1000.0);
 
