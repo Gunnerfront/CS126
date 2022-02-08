@@ -16,6 +16,10 @@ public class NewMexicoHistoricalFeatures {
   private static final Double MILES_PER_DEGREE_LONGITUDE = 54.6;
   private static final Double MILES_PER_DEGREE_LATITUDE = 69.0;
 
+
+  public List<HistoricalFeature> getFeatures () {
+    return features;
+  }
   /**
    * Filtering method for getting a list of only the historical features with known coordinates
    *

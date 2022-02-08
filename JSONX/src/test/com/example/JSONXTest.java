@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,7 +32,7 @@ public class JSONXTest {
     }
 
     @Test
-    public void test_JSONFileOpening() {
+    public void testJSONFileOpening() {
         Boolean correctJSON = true;
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
@@ -44,7 +44,7 @@ public class JSONXTest {
     }
 
     @Test
-    public void test_findFeaturesInCountyLunaCounty() {
+    public void testFindFeaturesInCountyLunaCounty() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
                 gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
@@ -58,7 +58,7 @@ public class JSONXTest {
     }
 
     @Test
-    public void test_findFeaturesInCountyRioArribaCounty() {
+    public void testFindFeaturesInCountyRioArribaCounty() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
                 gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
@@ -72,7 +72,7 @@ public class JSONXTest {
     }
 
     @Test
-    public void test_findLocatableFeatures() {
+    public void testFindLocatableFeatures() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
                 gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
@@ -86,7 +86,7 @@ public class JSONXTest {
     }
 
     @Test
-    public void test_findFeaturesAddedInYearRange() {
+    public void testFindFeaturesAddedInYearRange() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
                 gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
@@ -101,7 +101,7 @@ public class JSONXTest {
     }
 
     @Test
-    public void test_findNearbyFeaturesClose() {
+    public void testFindNearbyFeaturesClose() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
                 gson.fromJson(reader, NewMexicoHistoricalFeatures.class);
@@ -111,13 +111,12 @@ public class JSONXTest {
             assertEquals(nearbyFeatures.size(), 1);
 
         } catch ( Exception e ) {
-            System.out.println(e);
             assertEquals(true, false);
         }
     }
 
     @Test
-    public void test_findNearbyFeaturesAllKnownLocations() {
+    public void testFindNearbyFeaturesAllKnownLocations() {
         try {
             NewMexicoHistoricalFeatures newMexicoHistoricalFeatures =
                 gson.fromJson(reader, NewMexicoHistoricalFeatures.class);

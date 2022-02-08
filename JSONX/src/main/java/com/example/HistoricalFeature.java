@@ -29,4 +29,6 @@ public class HistoricalFeature {
   public PropertyData getPropertyData() {
     return propertyData;
   }
+
+  public GeometryData getGeometryData() { return geometryData;}
 }
