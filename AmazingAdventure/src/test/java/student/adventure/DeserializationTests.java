@@ -1,14 +1,13 @@
 package student.adventure;
 
+import maplayout.*;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-
-import com.google.gson.Gson;
-import maplayout.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.validation.constraints.Null;
+import com.google.gson.Gson;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
