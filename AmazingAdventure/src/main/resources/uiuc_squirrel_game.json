@@ -1,12 +1,12 @@
 {
-  "startMessage": "You have just finished your last final at the CBTF, a day later than the official last day of finals\n, since you overslept and your teacher gave you a retake. Not a single student in sight, the campus feels very quiet. TOO quiet...\nSuddenly a scurry of squirrels appears in the distance. They look feral, teeth bared, frothing at the mouth. Luckily, they have not noticed you yet.\nYou must act quick, and escape the campus before you are devoured!\n",
-  "deathMessage": "You Died",
+  "startMessage": "You have just finished your last final at the CBTF, a day later than the official last day of finals,\nsince you overslept and your teacher gave you a retake. Not a single student in sight, the campus feels very quiet. TOO quiet...\nSuddenly a scurry of squirrels appears in the distance. They look feral, teeth bared, frothing at the mouth. Luckily, they have not noticed you yet.\nYou must act quick, and escape the campus before you are devoured!\n",
+  "deathMessage": "GAME OVER. You have died from your injuries!",
   "startAreaId": 0,
   "endAreaId": 15,
   "itemTypes": [
     {"itemId": 0, "itemDescription": "No item here."},
-    {"itemId": 1, "itemDescription": "Baseball Bat - Reduce the threat level in an area to zero. Item breaks after use."},
-    {"itemId": 2, "itemDescription": "MedKit - Reduce your injury level to zero. An injury level of 3 results in death."},
+    {"itemId": 1, "itemDescription": "Baseball Bat - Reduces the threat level in an area to zero. Item breaks after use."},
+    {"itemId": 2, "itemDescription": "MedKit - Reduces your injury level to zero."},
     {"itemId": 3, "itemDescription": "Bus Key - A peculiarly shaped key that seems to be for starting a bus."}
   ],
   "areas": [
