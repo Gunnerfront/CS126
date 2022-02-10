@@ -79,10 +79,11 @@ public class DeserializationTests {
                     assertEquals(item.getItemDescription(), "No item here.");
                     break;
                 case 1:
-                    assertEquals(item.getItemDescription(), "Baseball Bat - Reduce the threat level in an area to zero. Item breaks after use.");
+                    assertEquals(item.getItemDescription(), "Baseball Bat - Reduces the threat level in an area to " +
+                        "zero. Item breaks after use.");
                     break;
                 case 2:
-                    assertEquals(item.getItemDescription(), "MedKit - Reduce your injury level to zero. An injury level of 3 results in death.");
+                    assertEquals(item.getItemDescription(), "MedKit - Reduces your injury level to zero.");
                     break;
                 case 3:
                     assertEquals(item.getItemDescription(), "Bus Key - A peculiarly shaped key that seems to be for starting a bus.");
