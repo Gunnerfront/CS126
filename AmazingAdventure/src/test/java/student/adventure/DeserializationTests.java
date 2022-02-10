@@ -66,7 +66,7 @@ public class DeserializationTests {
     }
 
     @Test
-    // Checks that the Item class has filled values with descriptions
+    // Checks that the Item class has filled values with correct item descriptions
     public void testItemClassDeserialization() {
         List<Item> items = mapLayout.getItemTypes();
         assertNotEquals(items.size(), 0);
