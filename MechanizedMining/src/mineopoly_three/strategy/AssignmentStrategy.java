@@ -4,12 +4,17 @@ import mineopoly_three.action.TurnAction;
 import mineopoly_three.game.Economy;
 import mineopoly_three.item.InventoryItem;
 import mineopoly_three.item.ItemType;
+import mineopoly_three.tiles.TileType;
 
+import javax.lang.model.type.NullType;
 import java.awt.Point;
 import java.util.Random;
 
 public class AssignmentStrategy implements MinePlayerStrategy {
-  final static String PLAYER_NAME = "Gunnerside";
+  private static final String PLAYER_NAME = "Gunnerside";
+
+  // The distance that the robot considers as "nearby" when searching for nearby items
+  private static final int NEARBY_DISTANCE = 5;
 
   // Round Info
   private int maxRobotCharge;
@@ -56,8 +61,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   }
 
   /**
-   * Decides and returns the robot's action this turn based on the robot's current status as well as the current
-   * environment.
+   * Decides and returns the robot's action this turn based on the robot's priority.
    *
    * @param boardView A PlayerBoardView object representing all the information about the board and the other player
    *                   that your strategy is allowed to access
@@ -66,7 +70,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    * @param isRedTurn For use when two players attempt to move to the same spot on the same turn
    *                   If true: The red player will move to the spot, and the blue player will do nothing
    *                   If false: The blue player will move to the spot, and the red player will do nothing
-   * @return
+   * @return TurnAction the robot action that the strategy determines is best in this turn
    */
   @java.lang.Override
   public TurnAction getTurnAction(PlayerBoardView boardView, Economy economy, int currentCharge, boolean isRedTurn) {
@@ -74,35 +78,145 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     RobotPriority priority = determineRobotPriority();
 
     // Choose Action
-    TurnAction action;
-    switch (priority) {
-      case CHARGE:
-        action = goCharge();
-        break;
-      case SELL:
-        action = goSell();
-        break;
-      case PICKUP_HERE:
-        action = pickupHere();
-        break;
-      case MINE_PREFERRED_NEARBY:
-        action = minePreferredNearby();
-        break;
-      case MINE_OTHER_NEARBY:
-        action = mineOtherNearby();
-        break;
-      case MINE_OTHER:
-        action = mineOther();
-        break;
-      case PICKUP_ELSEWHERE:
-        action = pickupElsewhere();
-        break;
-      case NULL:
-      default:
-        action = null;
-    }
+    TurnAction action = switch ( priority ) {
+      case CHARGE -> goCharge();
+      case SELL -> goSell();
+      case PICKUP_HERE -> pickupHere();
+      case PICKUP_ELSEWHERE -> pickupElsewhere();
+      case MINE_HERE -> mineHere();
+      case MINE_NEARBY -> mineNearby();
+      default -> null;
+    };
 
     return action;
+  }
+
+  private TurnAction goCharge() {
+    if (getTileTypeHere() == TileType.RECHARGE) {
+      return null;
+    } else {
+      return findMoveActionToTile(TileType.RECHARGE);
+    }
+  }
+
+  private TurnAction goSell() {
+    if (isRedPlayer) {
+      if (getTileTypeHere() == TileType.RED_MARKET) {
+        return null;
+      } else {
+        return findMoveActionToTile(TileType.RED_MARKET);
+      }
+    } else {
+      if (getTileTypeHere() == TileType.BLUE_MARKET) {
+        return null;
+      } else {
+        return findMoveActionToTile(TileType.BLUE_MARKET);
+      }
+    }
+  }
+
+  private TurnAction pickupHere() {
+    return TurnAction.PICK_UP_RESOURCE;
+  }
+
+  private  TurnAction pickupElsewhere() {
+    return findMoveActionToItem(null);
+  }
+
+  private TurnAction mineHere() {
+    return TurnAction.MINE;
+  }
+
+  private TurnAction mineNearby() {
+    int iterations = 0;
+    // If preferred gem type is no longer on map, find the next best gem type that IS on the map
+    while (!hasPreferredGemTileOnMap() && iterations < ItemType.values().length) {
+      rotatePreferredItem();
+      iterations++;
+    }
+    return findMoveActionToTile(preferredItem.getResourceTileType());
+  }
+
+  private TurnAction findMoveActionToTile(TileType tileType) {
+    // TODO
+  }
+
+  private TurnAction findMoveActionToItem(ItemType itemType) {
+    if (itemType == null) {
+      // find path to any item
+    } else {
+      // TODO
+    }
+  }
+
+  private void rotatePreferredItem() {
+    // TODO
+  }
+
+  /**
+   * Checks various environment and robot variables to determine the robot's priority. The order of the priority
+   * assignment is most important in terms of the strategy and will impact the robot's actions drastically.
+   *
+   * @return
+   */
+  public RobotPriority determineRobotPriority() {
+    RobotPriority priority;
+    if (hasLowCharge()) {
+      priority = RobotPriority.CHARGE;
+    } else if (hasFullInventory()) {
+      priority = RobotPriority.SELL;
+    } else if (isGemOnGroundHere()) {
+      priority = RobotPriority.PICKUP_HERE;
+    } else if (isGemOnGroundOnMap()) {
+      priority = RobotPriority.PICKUP_ELSEWHERE;
+    } else if (hasPreferredGemTileHere()) {
+      priority = RobotPriority.MINE_HERE;
+    } else if (hasPreferredGemTileOnMap() || hasOtherGemTileOnMap()) {
+      priority = RobotPriority.MINE_NEARBY;
+    } else {
+      priority = RobotPriority.NULL;
+    }
+
+    return priority;
+  }
+
+  private boolean hasOtherGemTileOnMap() {
+    // TODO
+  }
+
+  private boolean hasPreferredGemTileHere() {
+    // TODO
+  }
+
+  private boolean isGemOnGroundOnMap() {
+    // TODO
+  }
+
+  private boolean isGemOnGroundHere() {
+    // TODO
+  }
+
+  private boolean hasFullInventory() {
+    // TODO
+  }
+
+  private boolean hasLowCharge() {
+    // TODO
+  }
+
+  private boolean hasPreferredGemTileOnMap() {
+    // TODO
+  }
+
+  /**
+   * Updates the robot's data values based on new turn's information.
+   *
+   * @param boardView the current turn's board layout
+   * @param currentCharge the charge on the robot this turn
+   */
+  private void updateRobot(PlayerBoardView boardView, int currentCharge) {
+    this.currentBoard = boardView;
+    this.robotCharge = currentCharge;
   }
 
   /**
@@ -155,5 +269,27 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   private void resetRobot() {
     robotInventorySize = 0;
     preferredItem = ItemType.DIAMOND;
+  }
+
+  /**
+   * Gets the player robot's X location on the board
+   *
+   * @return an int representing the x coordinate
+   */
+  private int getRobotLocationX() {
+    return currentBoard.getYourLocation().x;
+  }
+
+  /**
+   * Gets the player robot's Y location on the board
+   *
+   * @return an int representing the y coordinate
+   */
+  private int getRobotLocationY() {
+    return currentBoard.getYourLocation().y;
+  }
+
+  private TileType getTileTypeHere() {
+    return currentBoard.getTileTypeAtLocation(getRobotLocationX(), getRobotLocationY());
   }
 }
