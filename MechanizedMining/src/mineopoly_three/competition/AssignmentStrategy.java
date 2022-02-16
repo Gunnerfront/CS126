@@ -1,9 +1,12 @@
-package mineopoly_three.strategy;
+package mineopoly_three.competition;
 
 import mineopoly_three.action.TurnAction;
 import mineopoly_three.game.Economy;
 import mineopoly_three.item.InventoryItem;
 import mineopoly_three.item.ItemType;
+import mineopoly_three.strategy.MinePlayerStrategy;
+import mineopoly_three.strategy.PlayerBoardView;
+import mineopoly_three.strategy.RobotPriority;
 import mineopoly_three.tiles.TileType;
 
 import java.awt.Point;
@@ -29,11 +32,16 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   private int robotInventorySize;
   private ItemType preferredItem;           // This is the item (gem) that the robot will look for first
   private int autominerCount;
-  private RobotPriority previousPriority;   // The robot's priority in the last turn
+  private mineopoly_three.strategy.RobotPriority previousPriority;   // The robot's priority in the last turn
 
   // Environment Info
   private int boardSize;
   private PlayerBoardView currentBoard;
+
+  /**
+   * Constructor for competition
+   */
+  public AssignmentStrategy() {}
 
   /**
    * Reset robot and initialize each rounds new values
@@ -49,7 +57,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    * @param isRedPlayer True if this strategy is the red player, false otherwise
    * @param random A random number generator, if your strategy needs random numbers you should use this.
    */
-  @java.lang.Override
+  @Override
   public void initialize(int boardSize, int maxInventorySize, int maxCharge, int winningScore,
                          PlayerBoardView startingBoard, Point startTileLocation, boolean isRedPlayer, Random random) {
     resetRobot();
@@ -75,10 +83,10 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    *                   If false: The blue player will move to the spot, and the red player will do nothing
    * @return TurnAction the robot action that the strategy determines is best in this turn
    */
-  @java.lang.Override
+  @Override
   public TurnAction getTurnAction(PlayerBoardView boardView, Economy economy, int currentCharge, boolean isRedTurn) {
     updateRobot(boardView, currentCharge);
-    RobotPriority priority = determineRobotPriority();
+    mineopoly_three.strategy.RobotPriority priority = determineRobotPriority();
     previousPriority = priority;
 
     // Choose Action
@@ -307,22 +315,22 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    *
    * @return the enumerated RobotPriority for this turn
    */
-  private RobotPriority determineRobotPriority() {
-    RobotPriority priority;
+  private mineopoly_three.strategy.RobotPriority determineRobotPriority() {
+    mineopoly_three.strategy.RobotPriority priority;
     if (hasLowCharge() || shouldKeepCharging()) {
-      priority = RobotPriority.CHARGE;
+      priority = mineopoly_three.strategy.RobotPriority.CHARGE;
     } else if (hasAutominer()) {
-      priority = RobotPriority.USE_AUTOMINER;
+      priority = mineopoly_three.strategy.RobotPriority.USE_AUTOMINER;
     } else if (hasFullInventory()) {
-      priority = RobotPriority.SELL;
+      priority = mineopoly_three.strategy.RobotPriority.SELL;
     } else if (isGemOnGroundHere()) {
-      priority = RobotPriority.PICKUP_HERE;
+      priority = mineopoly_three.strategy.RobotPriority.PICKUP_HERE;
     } else if (hasPreferredGemTileHere()) {
-      priority = RobotPriority.MINE_HERE;
+      priority = mineopoly_three.strategy.RobotPriority.MINE_HERE;
     } else if (hasPreferredGemTileOnMap() || hasOtherGemTileOnMap()) {
-      priority = RobotPriority.MINE_ELSEWHERE;
+      priority = mineopoly_three.strategy.RobotPriority.MINE_ELSEWHERE;
     } else {
-      priority = RobotPriority.NULL;
+      priority = mineopoly_three.strategy.RobotPriority.NULL;
     }
 
     return priority;
@@ -334,7 +342,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    * @return true if robot should keep charging, false otherwise
    */
   private boolean shouldKeepCharging() {
-    return previousPriority == RobotPriority.CHARGE && robotCharge != maxRobotCharge;
+    return previousPriority == mineopoly_three.strategy.RobotPriority.CHARGE && robotCharge != maxRobotCharge;
   }
 
   /**
@@ -449,7 +457,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    *
    * @param itemReceived The item received from the player's TurnAction on their last turn
    */
-  @java.lang.Override
+  @Override
   public void onReceiveItem(InventoryItem itemReceived) {
     robotInventorySize++;
     if (itemReceived.getItemType() == ItemType.AUTOMINER) {
@@ -463,7 +471,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    *
    * @param totalSellPrice The combined sell price for all items in your strategy's inventory
    */
-  @java.lang.Override
+  @Override
   public void onSoldInventory(int totalSellPrice) {
     robotInventorySize = 0;
     rotatePreferredItem();
@@ -475,7 +483,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    * @param pointsScored The total number of points this strategy scored
    * @param opponentPointsScored The total number of points the opponent's strategy scored
    */
-  @java.lang.Override
+  @Override
   public void endRound(int pointsScored, int opponentPointsScored) {
     resetRobot();
     autominerCount = 0;
@@ -488,7 +496,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    *
    * @return a String representing the robot player's name
    */
-  @java.lang.Override
+  @Override
   public String getName() {
     return PLAYER_NAME;
   }
@@ -510,15 +518,5 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    */
   private TileType getTileTypeHere() {
     return currentBoard.getTileTypeAtLocation(currentBoard.getYourLocation());
-  }
-
-  // TESTING METHODS
-
-  public int getRobotInventorySize() {
-    return robotInventorySize;
-  }
-
-  public ItemType getPreferredItem() {
-    return preferredItem;
   }
 }
