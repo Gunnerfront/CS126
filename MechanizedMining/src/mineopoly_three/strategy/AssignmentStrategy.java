@@ -9,6 +9,8 @@ import java.awt.Point;
 import java.util.Random;
 
 public class AssignmentStrategy implements MinePlayerStrategy {
+  final static String PLAYER_NAME = "Gunnerside";
+
   // Round Info
   private int maxRobotCharge;
   private int maxInventorySize;
@@ -18,7 +20,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   // Current Robot Info
   private int robotCharge;
   private int robotInventorySize;
-  private ItemType preferredItem;
+  private ItemType preferredItem;           // This is the item (gem) that the robot will look for first
   private Point robotLocation;
 
   // Environment Info
@@ -53,6 +55,19 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     this.isRedPlayer = isRedPlayer;
   }
 
+  /**
+   * Decides and returns the robot's action this turn based on the robot's current status as well as the current
+   * environment.
+   *
+   * @param boardView A PlayerBoardView object representing all the information about the board and the other player
+   *                   that your strategy is allowed to access
+   * @param economy The GameEngine's economy object which holds current prices for resources
+   * @param currentCharge The amount of charge your robot has (number of tile moves before needing to recharge)
+   * @param isRedTurn For use when two players attempt to move to the same spot on the same turn
+   *                   If true: The red player will move to the spot, and the blue player will do nothing
+   *                   If false: The blue player will move to the spot, and the red player will do nothing
+   * @return
+   */
   @java.lang.Override
   public TurnAction getTurnAction(PlayerBoardView boardView, Economy economy, int currentCharge, boolean isRedTurn) {
     updateRobot(boardView, currentCharge);
@@ -90,25 +105,47 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     return action;
   }
 
+  /**
+   * Runs when the player successfully executed a PICK_UP TurnAction on their last turn.
+   * With this strategy it increases the inventory of the robot by one regardless of the item.
+   *
+   * @param itemReceived The item received from the player's TurnAction on their last turn
+   */
   @java.lang.Override
   public void onReceiveItem(InventoryItem itemReceived) {
     robotInventorySize++;
   }
 
+  /**
+   * Runs when the player steps on a market tile of their color with at least one gem in their inventory.
+   * With this strategy it resets the robot's inventory to zero and rotates the robots preferred item.
+   *
+   * @param totalSellPrice The combined sell price for all items in your strategy's inventory
+   */
   @java.lang.Override
   public void onSoldInventory(int totalSellPrice) {
     robotInventorySize = 0;
     rotatePreferredItem();
   }
 
+  /**
+   * Returns the name of the player in the round
+   *
+   * @return a String representing the robot player's name
+   */
   @java.lang.Override
   public String getName() {
-    return "Gunnerside";
+    return PLAYER_NAME;
   }
 
+  /**
+   * Resets the robot's non-initializable values at the end of a round, when one player wins
+   *
+   * @param pointsScored The total number of points this strategy scored
+   * @param opponentPointsScored The total number of points the opponent's strategy scored
+   */
   @java.lang.Override
   public void endRound(int pointsScored, int opponentPointsScored) {
-
     resetRobot();
   }
 
@@ -116,7 +153,6 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    * Where the robot data for values not initialized with new round values will be reset to default values
    */
   private void resetRobot() {
-    //TODO
     robotInventorySize = 0;
     preferredItem = ItemType.DIAMOND;
   }
