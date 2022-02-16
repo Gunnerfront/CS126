@@ -27,6 +27,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   private int robotCharge;
   private int robotInventorySize;
   private ItemType preferredItem;           // This is the item (gem) that the robot will look for first
+  private int autominerCount;
 
   // Environment Info
   private int boardSize;
@@ -117,7 +118,13 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   }
 
   private TurnAction pickupHere() {
-    return TurnAction.PICK_UP_RESOURCE;
+    List<InventoryItem> itemsHere =
+        currentBoard.getItemsOnGround().get(new Point(getRobotLocationX(), getRobotLocationY()));
+    if (itemsHere.contains(new InventoryItem(ItemType.AUTOMINER))) {
+      return TurnAction.PICK_UP_AUTOMINER;
+    } else {
+      return TurnAction.PICK_UP_RESOURCE;
+    }
   }
 
   private  TurnAction pickupElsewhere() {
@@ -207,7 +214,8 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   }
 
   /**
-   * Searches all items on the ground of the current game board for the nearest item of the specified type.
+   * Searches all items on the ground of the current game board for the nearest item of the specified type. If
+   * specified item type is null, gets the nearest location of any item.
    *
    * @param itemType the type of the item you are looking for
    * @return the Point coordinate of the item, or the robot's current location if not found
@@ -312,6 +320,8 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     RobotPriority priority;
     if (hasLowCharge()) {
       priority = RobotPriority.CHARGE;
+    } else if (hasAutominer()) {
+      priority = RobotPriority.USE_AUTOMINER;
     } else if (hasFullInventory()) {
       priority = RobotPriority.SELL;
     } else if (isGemOnGroundHere()) {
@@ -329,8 +339,15 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     return priority;
   }
 
+  private boolean hasAutominer() {
+    return autominerCount > 0;
+  }
+
   private boolean hasOtherGemTileOnMap() {
-    // TODO
+    Map<Point, List<InventoryItem>> itemsOnGround = currentBoard.getItemsOnGround();
+    for (Point ) {
+
+    }
   }
 
   private boolean hasPreferredGemTileHere() {
@@ -397,6 +414,9 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   @java.lang.Override
   public void onReceiveItem(InventoryItem itemReceived) {
     robotInventorySize++;
+    if (itemReceived.getItemType() == ItemType.AUTOMINER) {
+      autominerCount++;
+    }
   }
 
   /**
@@ -420,6 +440,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   @java.lang.Override
   public void endRound(int pointsScored, int opponentPointsScored) {
     resetRobot();
+    autominerCount = 0;
   }
 
   // ROBOT OTHER METHODS
