@@ -19,7 +19,7 @@ import java.util.List;
 
 public class AssignmentStrategyTest {
   private static PlayerBoardView playerBoardView;
-  private static MinePlayerStrategy playerStrategy;
+  private static AssignmentStrategy playerStrategy;
 
   // Default values for building AssignmentStrategy object
   private static final int boardSize = 5;
@@ -33,6 +33,8 @@ public class AssignmentStrategyTest {
   private static final Random random = new Random(); // Irrelevant values
   private static final Point otherPlayerLocation = new Point(4, 1);    // Irrelevant values
   private static final Economy economy = new Economy(new ItemType[]{ItemType.RUBY, ItemType.EMERALD, ItemType.DIAMOND});
+  private static final Point RUBY_LOCATION = new Point(0, 1);
+  private static final Point AUTOMINER_LOCATION = new Point(4, 0);
 
   // VERY IMPORTANT - The actual testing map
   private static final TileType[][] tiles = {
@@ -49,9 +51,9 @@ public class AssignmentStrategyTest {
     Map<Point, List<InventoryItem>> itemsOnGround = new HashMap<>();
     switch (flag) {
       case RUBY_ON_GROUND_PLUS_AUTOMINER:
-        itemsOnGround.putIfAbsent(new Point(0, 1), new ArrayList<>(List.of(new InventoryItem(ItemType.RUBY))));
+        itemsOnGround.putIfAbsent(RUBY_LOCATION, new ArrayList<>(List.of(new InventoryItem(ItemType.RUBY))));
       case JUST_AUTOMINER:
-        itemsOnGround.putIfAbsent(new Point(4, 0), new ArrayList<>(List.of(new InventoryItem(ItemType.AUTOMINER))));
+        itemsOnGround.putIfAbsent(AUTOMINER_LOCATION, new ArrayList<>(List.of(new InventoryItem(ItemType.AUTOMINER))));
         break;
     }
     return itemsOnGround;
@@ -65,7 +67,7 @@ public class AssignmentStrategyTest {
   }
 
   @Test
-  // Checks that the Direction class has filled values
+  // Tests if robot will start to go charge when on low battery
   public void testGetTurnActionCharge() {
     // Set Up
     int maxCharge = 0;
@@ -78,7 +80,7 @@ public class AssignmentStrategyTest {
   }
 
   @Test
-  // Checks that the Direction class has filled values
+  // Tests if the robot will start to go sell when it has a full inventory and good charge
   public void testGetTurnActionSell() {
     // Set Up
     Point thisPlayerLocation = new Point(1, 2);
@@ -89,5 +91,101 @@ public class AssignmentStrategyTest {
     TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, maxCharge, true);
 
     assertEquals(actual, TurnAction.MOVE_DOWN);
+  }
+
+  @Test
+  // Tests if the robot will pick up an item when it has good charge, empty space in inventory, and on tile with item
+  public void testGetTurnActionPickupHere() {
+    // Set Up
+    Point thisPlayerLocation = RUBY_LOCATION;
+    itemsOnGround = initializeItemMap(MapItemInitFlag.RUBY_ON_GROUND_PLUS_AUTOMINER);
+    playerBoardView = new PlayerBoardView(tiles, itemsOnGround, thisPlayerLocation, otherPlayerLocation, 0);
+    playerStrategy.initialize(boardSize, maxInventorySize, maxCharge, winningScore, playerBoardView,
+        thisPlayerLocation, isRedPlayer, random);
+    TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, maxCharge, true);
+
+    assertEquals(actual, TurnAction.PICK_UP_RESOURCE);
+  }
+
+  @Test
+  // Tests if the robot will mine when it has good charge, empty space in inventory, and on preferred
+  // gem tile
+  public void testGetTurnActionMineHere() {
+    // Set Up
+    Point thisPlayerLocation = new Point(3, 4);
+    itemsOnGround = initializeItemMap(MapItemInitFlag.JUST_AUTOMINER);
+    playerBoardView = new PlayerBoardView(tiles, itemsOnGround, thisPlayerLocation, otherPlayerLocation, 0);
+    playerStrategy.initialize(boardSize, maxInventorySize, maxCharge, winningScore, playerBoardView,
+        thisPlayerLocation, isRedPlayer, random);
+    TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, maxCharge, true);
+
+    assertEquals(actual, TurnAction.MINE);
+  }
+
+  @Test
+  // Tests if the robot will move towards preferred gem tile when it has good charge, empty space in inventory, and
+  // near a preferred gem tile on map
+  public void testGetTurnActionMineElsewhere() {
+    // Set Up
+    Point thisPlayerLocation = new Point(3, 3);
+    itemsOnGround = initializeItemMap(MapItemInitFlag.JUST_AUTOMINER);
+    playerBoardView = new PlayerBoardView(tiles, itemsOnGround, thisPlayerLocation, otherPlayerLocation, 0);
+    playerStrategy.initialize(boardSize, maxInventorySize, maxCharge, winningScore, playerBoardView,
+        thisPlayerLocation, isRedPlayer, random);
+    TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, maxCharge, true);
+
+    assertEquals(actual, TurnAction.MOVE_UP);
+  }
+
+  @Test
+  // Tests if the robot's inventory grows after receiving an item
+  public void testOnReceiveItem() {
+    // Set Up
+    itemsOnGround = initializeItemMap(MapItemInitFlag.JUST_AUTOMINER);
+    playerBoardView = new PlayerBoardView(tiles, itemsOnGround, thisPlayerLocation, otherPlayerLocation, 0);
+    playerStrategy.initialize(boardSize, maxInventorySize, maxCharge, winningScore, playerBoardView,
+        thisPlayerLocation, isRedPlayer, random);
+    TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, maxCharge, true);
+
+    // Receive item check
+    int previousInventory = playerStrategy.getRobotInventorySize();
+    playerStrategy.onReceiveItem(new InventoryItem(ItemType.RUBY));
+    int actualInventory = playerStrategy.getRobotInventorySize();
+
+    assertEquals(actualInventory, previousInventory + 1);
+  }
+
+  @Test
+  // Tests if the robot's preferred gem type rotates after selling inventory
+  public void testOnSoldInventory() {
+    // Set Up
+    itemsOnGround = initializeItemMap(MapItemInitFlag.JUST_AUTOMINER);
+    playerBoardView = new PlayerBoardView(tiles, itemsOnGround, thisPlayerLocation, otherPlayerLocation, 0);
+    playerStrategy.initialize(boardSize, maxInventorySize, maxCharge, winningScore, playerBoardView,
+        thisPlayerLocation, isRedPlayer, random);
+    TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, maxCharge, true);
+
+    // Sell items check
+    playerStrategy.onSoldInventory(100);
+    ItemType newPreferredItem = playerStrategy.getPreferredItem();
+
+    assertEquals(newPreferredItem, ItemType.RUBY);
+  }
+
+  @Test
+  // Tests if values like inventorySize of robot resets to zero after endRound()
+  public void testEndRound() {
+    // Set Up
+    Point thisPlayerLocation = RUBY_LOCATION;
+    itemsOnGround = initializeItemMap(MapItemInitFlag.RUBY_ON_GROUND_PLUS_AUTOMINER);
+    playerBoardView = new PlayerBoardView(tiles, itemsOnGround, thisPlayerLocation, otherPlayerLocation, 0);
+    playerStrategy.initialize(boardSize, maxInventorySize, maxCharge, winningScore, playerBoardView,
+        thisPlayerLocation, isRedPlayer, random);
+    // Robot picks up item
+    TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, maxCharge, true);
+    playerStrategy.endRound(winningScore, winningScore);
+    int actualInventorySize = playerStrategy.getRobotInventorySize();
+
+    assertEquals(actualInventorySize, 0);
   }
 }

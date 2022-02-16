@@ -207,7 +207,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    * @param tileType the tile type you are trying to find movement for
    * @return TurnAction enum for moving in the direction of the tile type
    */
-  public TurnAction findMoveActionToTile(TileType tileType) {
+  private TurnAction findMoveActionToTile(TileType tileType) {
     Point closestTilePoint = findClosestTileOfTileType(tileType);
 
     if (getRobotLocationX() > closestTilePoint.x) {
@@ -285,6 +285,10 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    * @return true if list contains at least one gem, false otherwise
    */
   private boolean listContainsGem(List<InventoryItem> list) {
+    if (list == null) {
+      return false;
+    }
+
     for (InventoryItem item : list) {
       ItemType itemType = item.getItemType();
       if (itemType == ItemType.RUBY || itemType == ItemType.EMERALD || itemType == ItemType.DIAMOND) {
@@ -300,7 +304,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    *
    * @return the enumerated RobotPriority for this turn
    */
-  public RobotPriority determineRobotPriority() {
+  private RobotPriority determineRobotPriority() {
     RobotPriority priority;
     if (hasLowCharge() || shouldKeepCharging()) {
       priority = RobotPriority.CHARGE;
@@ -503,5 +507,15 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    */
   private TileType getTileTypeHere() {
     return currentBoard.getTileTypeAtLocation(currentBoard.getYourLocation());
+  }
+
+  // TESTING METHODS
+
+  public int getRobotInventorySize() {
+    return robotInventorySize;
+  }
+
+  public ItemType getPreferredItem() {
+    return preferredItem;
   }
 }
