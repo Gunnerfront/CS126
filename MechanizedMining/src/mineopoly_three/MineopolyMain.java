@@ -25,7 +25,7 @@ public class MineopolyMain {
 
             for (int testBoardSize : assignmentBoardSizes) {
                 double strategyWinPercent = getStrategyWinPercent(yourStrategy, testBoardSize);
-                System.out.println("(Board size, win percent): (" + testBoardSize + ", " + strategyWinPercent + ")");
+                System.out.println("(Board size, win percent): (" + testBoardSize + ", " + strategyWinPercent + "%)");
             }
         } else {
             // Not testing the win percent, show the game instead
@@ -88,6 +88,6 @@ public class MineopolyMain {
             }
         }
 
-        return ((double) numRoundsWonByMinScore) / numTotalRounds;
+        return ((double) numRoundsWonByMinScore) / numTotalRounds * 100.0;
     }
 }

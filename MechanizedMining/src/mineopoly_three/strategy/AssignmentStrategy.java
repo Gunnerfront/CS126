@@ -26,6 +26,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   private int robotInventorySize;
   private ItemType preferredItem;           // This is the item (gem) that the robot will look for first
   private int autominerCount;
+  private RobotPriority previousPriority;   // The robot's priority in the last turn
 
   // Environment Info
   private int boardSize;
@@ -75,6 +76,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   public TurnAction getTurnAction(PlayerBoardView boardView, Economy economy, int currentCharge, boolean isRedTurn) {
     updateRobot(boardView, currentCharge);
     RobotPriority priority = determineRobotPriority();
+    previousPriority = priority;
 
     // Choose Action
     TurnAction action = switch ( priority ) {
@@ -90,11 +92,21 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     return action;
   }
 
+  /**
+   * Places the autominer if it is in robot's inventory.
+   *
+   * @return the TurnAction enum for placing an autominer
+   */
   private TurnAction useAutominer() {
     autominerCount--;
     return TurnAction.PLACE_AUTOMINER;
   }
 
+  /**
+   * Moves the robot in the direction of a Recharge TileType if not there already.
+   *
+   * @return null if at Recharge Tile, the TurnAction enum for moving in a certain direction if not
+   */
   private TurnAction goCharge() {
     if (getTileTypeHere() == TileType.RECHARGE) {
       return null;
@@ -103,6 +115,11 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     }
   }
 
+  /**
+   * Moves the robot in the direction of the nearest market of the robot's color.
+   *
+   * @return null if already at market, the TurnAction enum for moving in a certain direction if not
+   */
   private TurnAction goSell() {
     if (isRedPlayer) {
       if (getTileTypeHere() == TileType.RED_MARKET) {
@@ -119,6 +136,12 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     }
   }
 
+  /**
+   * Picks up the item on the ground at the robot's current location. Prioritizes picking up autominer.
+   *
+   * @return the TurnAction enum for picking up an autominer if present, the TurnAction enum for picking up a
+   *      resource otherwise
+   */
   private TurnAction pickupHere() {
     List<InventoryItem> itemsHere =
         currentBoard.getItemsOnGround().get(currentBoard.getYourLocation());
@@ -131,10 +154,21 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     }
   }
 
+  /**
+   * Tells the robot to mine at its current location.
+   *
+   * @return TurnAction enum for mining
+   */
   private TurnAction mineHere() {
     return TurnAction.MINE;
   }
 
+  /**
+   * Tells the robot to move towards the location of a nearby gem tile. If there are no more gem tiles of
+   * the robot's preferred type, the preferred type is rotated until it finds a gem tile with the preferred type.
+   *
+   * @return TurnAction enum for moving in the direction of a nearby gem tile
+   */
   private TurnAction mineNearby() {
     int iterations = 0;
     // If preferred gem type is no longer on map, find the next best gem type that IS on the map
@@ -166,6 +200,13 @@ public class AssignmentStrategy implements MinePlayerStrategy {
 
   // ROBOT SEARCH METHODS
 
+  /**
+   * Determines the best MoveAction for moving towards a particular tile type based on shortest distance
+   * to the robot.
+   *
+   * @param tileType the tile type you are trying to find movement for
+   * @return TurnAction enum for moving in the direction of the tile type
+   */
   public TurnAction findMoveActionToTile(TileType tileType) {
     Point closestTilePoint = findClosestTileOfTileType(tileType);
 
@@ -189,45 +230,53 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    * @return a Point coordinate of the location of the closest tile, or the robot's current location if not found
    */
   private Point findClosestTileOfTileType(TileType tileType) {
-    Point closestTile = currentBoard.getYourLocation();
-    PriorityQueue<Point> tilesToCheck = new PriorityQueue<Point>();
-    HashMap<Point, Boolean> exploredTiles = new HashMap<Point, Boolean>();
+    Point startPoint = currentBoard.getYourLocation();
+    Point closestTile = new Point(boardSize*boardSize, boardSize*boardSize);
+    List<Point> tileLocations = getTileLocations(tileType);
+    for (Point point : tileLocations) {
+      if (distanceBetweenPoints(startPoint, point) < distanceBetweenPoints(startPoint, closestTile)) {
+        closestTile = point;
+      }
+    }
+    return closestTile;
+  }
 
-    tilesToCheck.add(closestTile);
-    exploredTiles.putIfAbsent(closestTile, true);
-    while (!tilesToCheck.isEmpty()) {
-      closestTile = tilesToCheck.poll();
-      if (currentBoard.getTileTypeAtLocation(closestTile) == tileType) {
-        // If tile type matches specified tile type, return its coordinate
-        return closestTile;
-      } else {
-        // Add neighboring points if current tile is not a match
-        // Upper neighbor
-        Point currentNeighbor = new Point(closestTile.x, closestTile.y + 1);
-        if (isPointOnBoard(currentNeighbor) && !exploredTiles.containsKey(currentNeighbor)) {
-          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
-        }
-        // Right neighbor
-        currentNeighbor = new Point(closestTile.x + 1, closestTile.y);
-        if (isPointOnBoard(currentNeighbor) && !exploredTiles.containsKey(currentNeighbor)) {
-          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
-        }
-        // Lower neighbor
-        currentNeighbor = new Point(closestTile.x, closestTile.y - 1);
-        if (isPointOnBoard(currentNeighbor) && !exploredTiles.containsKey(currentNeighbor)) {
-          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
-        }
-        // Left neighbor
-        currentNeighbor = new Point(closestTile.x - 1, closestTile.y);
-        if (isPointOnBoard(currentNeighbor) && !exploredTiles.containsKey(currentNeighbor)) {
-          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
+  /**
+   * Returns a list of all locations on the board with a particular tile type.
+   *
+   * @param tileTypeSearched the tile type you are looking for
+   * @return a List of Points representing the locations of all tiles of the specified type
+   */
+  private List<Point> getTileLocations(TileType tileTypeSearched) {
+    List<Point> tileTypeLocations = new ArrayList<>();
+    for (int x = 0; x < boardSize; x++) {
+      for (int y = 0; y < boardSize; y++) {
+        Point here = new Point(x, y);
+        TileType tileTypeHere = currentBoard.getTileTypeAtLocation(here);
+        if (tileTypeHere == tileTypeSearched) {
+          tileTypeLocations.add(here);
         }
       }
     }
-    return currentBoard.getYourLocation();    // If closest tile cannot be found
+
+    return tileTypeLocations;
   }
 
-  // ROBOT LOGIC METHODS
+  // ROBOT LOGIC AND MATH METHODS
+
+  /**
+   * Returns the non-Euclidean distance between two points. Ex: The distance between (3, 4) and (5, 6)
+   * is (5 - 3) + (6 - 4) = 4.
+   *
+   * @param point1 one point
+   * @param point2 another point
+   * @return the integer distance between the points
+   */
+  private int distanceBetweenPoints(Point point1, Point point2) {
+    int xDistance = Math.abs(point1.x - point2.x);
+    int yDistance = Math.abs(point1.y - point2.y);
+    return xDistance + yDistance;
+  }
 
   /**
    * Checks if the specified list contains a gem item type.
@@ -236,19 +285,13 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    * @return true if list contains at least one gem, false otherwise
    */
   private boolean listContainsGem(List<InventoryItem> list) {
-    return list.contains(new InventoryItem(ItemType.RUBY)) || list.contains(new InventoryItem(ItemType.EMERALD)) ||
-        list.contains(new InventoryItem(ItemType.DIAMOND));
-  }
-
-  /**
-   * Checks if the specified point is within the bounds of the game board.
-   *
-   * @param point you are checking for
-   * @return true if in bounds, false if out of bounds
-   */
-  private boolean isPointOnBoard(Point point) {
-    return (point.x >= 0) && (point.y >= 0)
-        && (point.x < boardSize) && (point.y < boardSize);
+    for (InventoryItem item : list) {
+      ItemType itemType = item.getItemType();
+      if (itemType == ItemType.RUBY || itemType == ItemType.EMERALD || itemType == ItemType.DIAMOND) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -259,7 +302,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
    */
   public RobotPriority determineRobotPriority() {
     RobotPriority priority;
-    if (hasLowCharge()) {
+    if (hasLowCharge() || shouldKeepCharging()) {
       priority = RobotPriority.CHARGE;
     } else if (hasAutominer()) {
       priority = RobotPriority.USE_AUTOMINER;
@@ -276,6 +319,15 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     }
 
     return priority;
+  }
+
+  /**
+   * Checks if the robot should keep charging if it has been charging and has not reached full charge.
+   *
+   * @return true if robot should keep charging, false otherwise
+   */
+  private boolean shouldKeepCharging() {
+    return previousPriority == RobotPriority.CHARGE && robotCharge != maxRobotCharge;
   }
 
   /**
@@ -325,10 +377,21 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     return listContainsGem(itemsHere);
   }
 
+  /**
+   * Checks if the robot's inventory is full
+   *
+   * @return true if full inventory, false otherwise
+   */
   private boolean hasFullInventory() {
     return robotInventorySize >= maxInventorySize;
   }
 
+  /**
+   * Checks if the robot has low charge based on the LOW_BATTERY_LEVEL percentage which is relative to
+   * the initialized max charge of the robot.
+   *
+   * @return true if the robot has low charge, false otherwise
+   */
   private boolean hasLowCharge() {
     return (maxRobotCharge * LOW_BATTERY_LEVEL) >= robotCharge;
   }
@@ -430,8 +493,14 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     robotInventorySize = 0;
     preferredItem = ItemType.DIAMOND;
     hasHadAutominer = false;
+    this.previousPriority = RobotPriority.NULL;
   }
 
+  /**
+   * Returns the type of tile at the robot's current location.
+   *
+   * @return the TileType enum of the tile that the robot is currently at
+   */
   private TileType getTileTypeHere() {
     return currentBoard.getTileTypeAtLocation(currentBoard.getYourLocation());
   }
