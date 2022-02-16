@@ -5,8 +5,9 @@ import mineopoly_three.game.Economy;
 import mineopoly_three.item.InventoryItem;
 import mineopoly_three.item.ItemType;
 import mineopoly_three.tiles.TileType;
+import mineopoly_three.game.GameBoard;
+import mineopoly_three.*;
 
-import javax.lang.model.type.NullType;
 import java.awt.Point;
 import java.util.*;
 
@@ -138,7 +139,22 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   }
 
   public TurnAction findMoveActionToTile(TileType tileType) {
-    Point closestTilePoint = findClosestTile(tileType);
+    Point closestTilePoint = findClosestTileOfTileType(tileType);
+
+    if (getRobotLocationX() > closestTilePoint.x) {
+      return TurnAction.MOVE_LEFT;                    // Robot is to the right of this point
+    } else if (getRobotLocationX() < closestTilePoint.x) {
+      return TurnAction.MOVE_RIGHT;                   // Robot is to the left of this point
+    } else if (getRobotLocationY() > closestTilePoint.y) {
+      return TurnAction.MOVE_DOWN;                    // Robot is above this point
+    } else if (getRobotLocationY() < closestTilePoint.y) {
+      return TurnAction.MOVE_UP;                      // Robot is below this point
+    }
+    return null;
+  }
+
+  private TurnAction findMoveActionToItem(ItemType itemType) {
+    Point closestTilePoint = findClosestTileWithItem(itemType);
 
     if (getRobotLocationX() > closestTilePoint.x) {
       return TurnAction.MOVE_LEFT;                    // Robot is to the right of this point
@@ -153,61 +169,108 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   }
 
   /**
-   * Uses a breadth-first search to find the point on the board where the closest tile of the provided type is.
+   * Uses a breadth-first search list to find the point on the board where the closest tile of the provided type is.
    *
    * @param tileType the type of tile you are searching for
-   * @return a Point object representing the location of the closest tile
+   * @return a Point coordinate of the location of the closest tile, or the robot's current location if not found
    */
-  private Point findClosestTile(TileType tileType) {
-    Point closestTile = new Point(getRobotLocationX(), getRobotLocationY());
-    PriorityQueue<Point> tilesToCheck = new PriorityQueue<Point>();
-    HashMap<Point, Boolean> exploredTiles = new HashMap<Point, Boolean>();
+  private Point findClosestTileOfTileType(TileType tileType) {
+    Point startPoint = new Point(getRobotLocationX(), getRobotLocationY());
+    List<Point> searchList = getBoardSearchList(startPoint);
+    for (Point point : searchList) {
+      if (currentBoard.getTileTypeAtLocation(point) == tileType) {
+        return point;
+      }
+    }
+    return startPoint;
+  }
 
-    tilesToCheck.add(closestTile);
-    exploredTiles.putIfAbsent(closestTile, true);
-    while (!tilesToCheck.isEmpty()) {
-      closestTile = tilesToCheck.poll();
-      if (currentBoard.getTileTypeAtLocation(closestTile) == tileType) {
-        // If tile type matches specified tile type, return its coordinate
-        return closestTile;
-      } else {
-        // Add neighboring points if current tile is not a match
-        // Upper neighbor
-        Point currentNeighbor = new Point(closestTile.x, closestTile.y + 1);
-        if (ifPointIsOnBoard(currentNeighbor) && !tilesToCheck.contains(currentNeighbor)) {
-          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
-        }
-        // Right neighbor
-        currentNeighbor = new Point(closestTile.x + 1, closestTile.y);
-        if (ifPointIsOnBoard(currentNeighbor) && !tilesToCheck.contains(currentNeighbor)) {
-          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
-        }
-        // Lower neighbor
-        currentNeighbor = new Point(closestTile.x, closestTile.y - 1);
-        if (ifPointIsOnBoard(currentNeighbor) && !tilesToCheck.contains(currentNeighbor)) {
-          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
-        }
-        // Left neighbor
-        currentNeighbor = new Point(closestTile.x - 1, closestTile.y);
-        if (ifPointIsOnBoard(currentNeighbor) && !tilesToCheck.contains(currentNeighbor)) {
-          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
+  /**
+   * Searches all items on the ground of the current game board for the nearest item of the specified type.
+   *
+   * @param itemType the type of the item you are looking for
+   * @return the Point coordinate of the item, or the robot's current location if not found
+   */
+  private Point findClosestTileWithItem(ItemType itemType) {
+    Point closestPoint = new Point(getRobotLocationX(), getRobotLocationY());
+    Point robotPoint = new Point(getRobotLocationX(), getRobotLocationY());
+    Map<Point, List<InventoryItem>> itemsSearchMap = currentBoard.getItemsOnGround();
+
+    // Searches all points on map
+    for (Point point : itemsSearchMap.keySet()) {
+      // Checks if this point has that item there
+      if (itemType == null || itemsSearchMap.get(point).contains(new InventoryItem(itemType))) {
+        // Checks if this point is closer than current closest point found
+        if (distanceBetweenPoints(robotPoint, point) < distanceBetweenPoints(robotPoint, closestPoint)) {
+          closestPoint = point;
         }
       }
     }
-    return closestTile;
+
+    return closestPoint;
+  }
+
+  /**
+   * Returns the non-Euclidean distance between two points. Ex: The distance between (3, 4) and (5, 6)
+   * is (5 - 3) + (6 - 4) = 4.
+   *
+   * @param point1 one point
+   * @param point2 another point
+   * @return the integer distance between the points
+   */
+  private int distanceBetweenPoints(Point point1, Point point2) {
+    int xDistance = Math.abs(point1.x - point2.x);
+    int yDistance = Math.abs(point1.y - point2.y);
+    return xDistance + yDistance;
+  }
+
+  /**
+   * Uses breadth-first search to create a list of points for robot to search starting from closest points to farthest.
+   *
+   * @param start Point from where BFS begins
+   * @return  a List of Point objects in BFS order from the specified point
+   */
+  private List<Point> getBoardSearchList(Point start) {
+    List<Point> pointsToSearch = new ArrayList<>();   // return list
+    // Start of BFS
+    Point currentPoint = start;
+    HashMap<Point, Boolean> exploredPoints = new HashMap<Point, Boolean>();
+    PriorityQueue<Point> pointsToAdd = new PriorityQueue<Point>();
+    pointsToAdd.add(currentPoint);
+    exploredPoints.putIfAbsent(currentPoint, true);
+
+    while (!pointsToAdd.isEmpty()) {
+        currentPoint = pointsToAdd.poll();
+        pointsToSearch.add(currentPoint);
+        // Add neighboring points if current tile is not a match
+        // Upper neighbor
+        Point currentNeighbor = new Point(currentPoint.x, currentPoint.y + 1);
+        if (ifPointIsOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
+          pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
+        }
+        // Right neighbor
+        currentNeighbor = new Point(currentPoint.x + 1, currentPoint.y);
+        if (ifPointIsOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
+          pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
+        }
+        // Lower neighbor
+        currentNeighbor = new Point(currentPoint.x, currentPoint.y - 1);
+        if (ifPointIsOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
+          pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
+        }
+        // Left neighbor
+        currentNeighbor = new Point(currentPoint.x - 1, currentPoint.y);
+        if (ifPointIsOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
+          pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
+        }
+      }
+
+    return pointsToSearch;
   }
 
   private boolean ifPointIsOnBoard(Point point) {
     return (point.x >= 0) && (point.y >= 0)
         && (point.x < boardSize) && (point.y < boardSize);
-  }
-
-  private TurnAction findMoveActionToItem(ItemType itemType) {
-    if (itemType == null) {
-      // find path to any item
-    } else {
-      // TODO
-    }
   }
 
   private void rotatePreferredItem() {
