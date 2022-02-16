@@ -27,7 +27,6 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   private int robotCharge;
   private int robotInventorySize;
   private ItemType preferredItem;           // This is the item (gem) that the robot will look for first
-  private Point robotLocation;
 
   // Environment Info
   private int boardSize;
@@ -55,11 +54,12 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     this.maxInventorySize = maxInventorySize;
     this.maxRobotCharge = maxCharge;
     this.robotCharge = maxCharge;
-    this.robotLocation = startTileLocation;
     this.winningScore = winningScore;
     this.currentBoard = startingBoard;
     this.isRedPlayer = isRedPlayer;
   }
+
+  // ROBOT ACTION METHODS
 
   /**
    * Decides and returns the robot's action this turn based on the robot's priority.
@@ -85,7 +85,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
       case PICKUP_HERE -> pickupHere();
       case PICKUP_ELSEWHERE -> pickupElsewhere();
       case MINE_HERE -> mineHere();
-      case MINE_NEARBY -> mineNearby();
+      case MINE_ELSEWHERE -> mineNearby();
       default -> null;
     };
 
@@ -135,8 +135,29 @@ public class AssignmentStrategy implements MinePlayerStrategy {
       rotatePreferredItem();
       iterations++;
     }
-    return findMoveActionToTile(preferredItem.getResourceTileType());
+
+    if (hasPreferredGemTileHere()) {
+      return mineHere();
+    } else {
+      return findMoveActionToTile(preferredItem.getResourceTileType());
+    }
   }
+
+  /**
+   * Switches the robot's preferred item to search for from either ruby to emerald, emerald to diamond, or
+   * diamond to ruby.
+   */
+  private void rotatePreferredItem() {
+    if (preferredItem == ItemType.RUBY || preferredItem == ItemType.AUTOMINER) {
+      preferredItem = ItemType.EMERALD;
+    } else if (preferredItem == ItemType.EMERALD) {
+      preferredItem = ItemType.DIAMOND;
+    } else {
+      preferredItem = ItemType.RUBY;
+    }
+  }
+
+  // ROBOT SEARCH METHODS
 
   public TurnAction findMoveActionToTile(TileType tileType) {
     Point closestTilePoint = findClosestTileOfTileType(tileType);
@@ -211,20 +232,6 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   }
 
   /**
-   * Returns the non-Euclidean distance between two points. Ex: The distance between (3, 4) and (5, 6)
-   * is (5 - 3) + (6 - 4) = 4.
-   *
-   * @param point1 one point
-   * @param point2 another point
-   * @return the integer distance between the points
-   */
-  private int distanceBetweenPoints(Point point1, Point point2) {
-    int xDistance = Math.abs(point1.x - point2.x);
-    int yDistance = Math.abs(point1.y - point2.y);
-    return xDistance + yDistance;
-  }
-
-  /**
    * Uses breadth-first search to create a list of points for robot to search starting from closest points to farthest.
    *
    * @param start Point from where BFS begins
@@ -240,48 +247,66 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     exploredPoints.putIfAbsent(currentPoint, true);
 
     while (!pointsToAdd.isEmpty()) {
-        currentPoint = pointsToAdd.poll();
-        pointsToSearch.add(currentPoint);
-        // Add neighboring points if current tile is not a match
-        // Upper neighbor
-        Point currentNeighbor = new Point(currentPoint.x, currentPoint.y + 1);
-        if (ifPointIsOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
-          pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
-        }
-        // Right neighbor
-        currentNeighbor = new Point(currentPoint.x + 1, currentPoint.y);
-        if (ifPointIsOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
-          pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
-        }
-        // Lower neighbor
-        currentNeighbor = new Point(currentPoint.x, currentPoint.y - 1);
-        if (ifPointIsOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
-          pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
-        }
-        // Left neighbor
-        currentNeighbor = new Point(currentPoint.x - 1, currentPoint.y);
-        if (ifPointIsOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
-          pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
-        }
+      currentPoint = pointsToAdd.poll();
+      pointsToSearch.add(currentPoint);
+      // Add neighboring points if current tile is not a match
+      // Upper neighbor
+      Point currentNeighbor = new Point(currentPoint.x, currentPoint.y + 1);
+      if (isPointOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
+        pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
       }
+      // Right neighbor
+      currentNeighbor = new Point(currentPoint.x + 1, currentPoint.y);
+      if (isPointOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
+        pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
+      }
+      // Lower neighbor
+      currentNeighbor = new Point(currentPoint.x, currentPoint.y - 1);
+      if (isPointOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
+        pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
+      }
+      // Left neighbor
+      currentNeighbor = new Point(currentPoint.x - 1, currentPoint.y);
+      if (isPointOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
+        pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
+      }
+    }
 
     return pointsToSearch;
   }
 
-  private boolean ifPointIsOnBoard(Point point) {
-    return (point.x >= 0) && (point.y >= 0)
-        && (point.x < boardSize) && (point.y < boardSize);
+  // ROBOT LOGIC AND MATH METHODS
+
+  /**
+   * Returns the non-Euclidean distance between two points. Ex: The distance between (3, 4) and (5, 6)
+   * is (5 - 3) + (6 - 4) = 4.
+   *
+   * @param point1 one point
+   * @param point2 another point
+   * @return the integer distance between the points
+   */
+  private int distanceBetweenPoints(Point point1, Point point2) {
+    int xDistance = Math.abs(point1.x - point2.x);
+    int yDistance = Math.abs(point1.y - point2.y);
+    return xDistance + yDistance;
   }
 
-  private void rotatePreferredItem() {
-    // TODO
+  /**
+   * Checks if the specified point is within the bounds of the game board.
+   *
+   * @param point you are checking for
+   * @return true if in bounds, false if out of bounds
+   */
+  private boolean isPointOnBoard(Point point) {
+    return (point.x >= 0) && (point.y >= 0)
+        && (point.x < boardSize) && (point.y < boardSize);
   }
 
   /**
    * Checks various environment and robot variables to determine the robot's priority. The order of the priority
    * assignment is most important in terms of the strategy and will impact the robot's actions drastically.
    *
-   * @return
+   * @return the enumerated RobotPriority for this turn
    */
   public RobotPriority determineRobotPriority() {
     RobotPriority priority;
@@ -296,7 +321,7 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     } else if (hasPreferredGemTileHere()) {
       priority = RobotPriority.MINE_HERE;
     } else if (hasPreferredGemTileOnMap() || hasOtherGemTileOnMap()) {
-      priority = RobotPriority.MINE_NEARBY;
+      priority = RobotPriority.MINE_ELSEWHERE;
     } else {
       priority = RobotPriority.NULL;
     }
@@ -333,6 +358,26 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   }
 
   /**
+   * Gets the player robot's X location on the board
+   *
+   * @return an int representing the x coordinate
+   */
+  private int getRobotLocationX() {
+    return currentBoard.getYourLocation().x;
+  }
+
+  /**
+   * Gets the player robot's Y location on the board
+   *
+   * @return an int representing the y coordinate
+   */
+  private int getRobotLocationY() {
+    return currentBoard.getYourLocation().y;
+  }
+
+  // ROBOT EVENT METHODS
+
+  /**
    * Updates the robot's data values based on new turn's information.
    *
    * @param boardView the current turn's board layout
@@ -367,16 +412,6 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   }
 
   /**
-   * Returns the name of the player in the round
-   *
-   * @return a String representing the robot player's name
-   */
-  @java.lang.Override
-  public String getName() {
-    return PLAYER_NAME;
-  }
-
-  /**
    * Resets the robot's non-initializable values at the end of a round, when one player wins
    *
    * @param pointsScored The total number of points this strategy scored
@@ -387,30 +422,24 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     resetRobot();
   }
 
+  // ROBOT OTHER METHODS
+
+  /**
+   * Returns the name of the player in the round
+   *
+   * @return a String representing the robot player's name
+   */
+  @java.lang.Override
+  public String getName() {
+    return PLAYER_NAME;
+  }
+
   /**
    * Where the robot data for values not initialized with new round values will be reset to default values
    */
   private void resetRobot() {
     robotInventorySize = 0;
     preferredItem = ItemType.DIAMOND;
-  }
-
-  /**
-   * Gets the player robot's X location on the board
-   *
-   * @return an int representing the x coordinate
-   */
-  private int getRobotLocationX() {
-    return currentBoard.getYourLocation().x;
-  }
-
-  /**
-   * Gets the player robot's Y location on the board
-   *
-   * @return an int representing the y coordinate
-   */
-  private int getRobotLocationY() {
-    return currentBoard.getYourLocation().y;
   }
 
   private TileType getTileTypeHere() {
