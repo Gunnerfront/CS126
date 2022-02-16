@@ -5,8 +5,6 @@ import mineopoly_three.game.Economy;
 import mineopoly_three.item.InventoryItem;
 import mineopoly_three.item.ItemType;
 import mineopoly_three.tiles.TileType;
-import mineopoly_three.game.GameBoard;
-import mineopoly_three.*;
 
 import java.awt.Point;
 import java.util.*;
@@ -14,14 +12,14 @@ import java.util.*;
 public class AssignmentStrategy implements MinePlayerStrategy {
   private static final String PLAYER_NAME = "Gunnerside";
 
-  // The distance that the robot considers as "nearby" when searching for nearby items
-  private static final int NEARBY_DISTANCE = 5;
+  // The battery percentage at which the robot decides to charge
+  private static final double LOW_BATTERY_LEVEL = 0.20;
 
   // Round Info
   private int maxRobotCharge;
   private int maxInventorySize;
-  private int winningScore;
   private boolean isRedPlayer;
+  private boolean hasHadAutominer;
 
   // Current Robot Info
   private int robotCharge;
@@ -55,7 +53,6 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     this.maxInventorySize = maxInventorySize;
     this.maxRobotCharge = maxCharge;
     this.robotCharge = maxCharge;
-    this.winningScore = winningScore;
     this.currentBoard = startingBoard;
     this.isRedPlayer = isRedPlayer;
   }
@@ -82,15 +79,20 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     // Choose Action
     TurnAction action = switch ( priority ) {
       case CHARGE -> goCharge();
+      case USE_AUTOMINER -> useAutominer();
       case SELL -> goSell();
       case PICKUP_HERE -> pickupHere();
-      case PICKUP_ELSEWHERE -> pickupElsewhere();
       case MINE_HERE -> mineHere();
       case MINE_ELSEWHERE -> mineNearby();
       default -> null;
     };
 
     return action;
+  }
+
+  private TurnAction useAutominer() {
+    autominerCount--;
+    return TurnAction.PLACE_AUTOMINER;
   }
 
   private TurnAction goCharge() {
@@ -119,16 +121,14 @@ public class AssignmentStrategy implements MinePlayerStrategy {
 
   private TurnAction pickupHere() {
     List<InventoryItem> itemsHere =
-        currentBoard.getItemsOnGround().get(new Point(getRobotLocationX(), getRobotLocationY()));
-    if (itemsHere.contains(new InventoryItem(ItemType.AUTOMINER))) {
+        currentBoard.getItemsOnGround().get(currentBoard.getYourLocation());
+    if (itemsHere.contains(new InventoryItem(ItemType.AUTOMINER)) && !hasHadAutominer) {
+      hasHadAutominer = true;
+      autominerCount++;
       return TurnAction.PICK_UP_AUTOMINER;
     } else {
       return TurnAction.PICK_UP_RESOURCE;
     }
-  }
-
-  private  TurnAction pickupElsewhere() {
-    return findMoveActionToItem(null);
   }
 
   private TurnAction mineHere() {
@@ -181,122 +181,63 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     return null;
   }
 
-  private TurnAction findMoveActionToItem(ItemType itemType) {
-    Point closestTilePoint = findClosestTileWithItem(itemType);
-
-    if (getRobotLocationX() > closestTilePoint.x) {
-      return TurnAction.MOVE_LEFT;                    // Robot is to the right of this point
-    } else if (getRobotLocationX() < closestTilePoint.x) {
-      return TurnAction.MOVE_RIGHT;                   // Robot is to the left of this point
-    } else if (getRobotLocationY() > closestTilePoint.y) {
-      return TurnAction.MOVE_DOWN;                    // Robot is above this point
-    } else if (getRobotLocationY() < closestTilePoint.y) {
-      return TurnAction.MOVE_UP;                      // Robot is below this point
-    }
-    return null;
-  }
-
   /**
    * Uses a breadth-first search list to find the point on the board where the closest tile of the provided type is.
+   * Returns the robot's current position if unable to find a tile.
    *
    * @param tileType the type of tile you are searching for
    * @return a Point coordinate of the location of the closest tile, or the robot's current location if not found
    */
   private Point findClosestTileOfTileType(TileType tileType) {
-    Point startPoint = new Point(getRobotLocationX(), getRobotLocationY());
-    List<Point> searchList = getBoardSearchList(startPoint);
-    for (Point point : searchList) {
-      if (currentBoard.getTileTypeAtLocation(point) == tileType) {
-        return point;
-      }
-    }
-    return startPoint;
-  }
+    Point closestTile = currentBoard.getYourLocation();
+    PriorityQueue<Point> tilesToCheck = new PriorityQueue<Point>();
+    HashMap<Point, Boolean> exploredTiles = new HashMap<Point, Boolean>();
 
-  /**
-   * Searches all items on the ground of the current game board for the nearest item of the specified type. If
-   * specified item type is null, gets the nearest location of any item.
-   *
-   * @param itemType the type of the item you are looking for
-   * @return the Point coordinate of the item, or the robot's current location if not found
-   */
-  private Point findClosestTileWithItem(ItemType itemType) {
-    Point closestPoint = new Point(getRobotLocationX(), getRobotLocationY());
-    Point robotPoint = new Point(getRobotLocationX(), getRobotLocationY());
-    Map<Point, List<InventoryItem>> itemsSearchMap = currentBoard.getItemsOnGround();
-
-    // Searches all points on map
-    for (Point point : itemsSearchMap.keySet()) {
-      // Checks if this point has that item there
-      if (itemType == null || itemsSearchMap.get(point).contains(new InventoryItem(itemType))) {
-        // Checks if this point is closer than current closest point found
-        if (distanceBetweenPoints(robotPoint, point) < distanceBetweenPoints(robotPoint, closestPoint)) {
-          closestPoint = point;
+    tilesToCheck.add(closestTile);
+    exploredTiles.putIfAbsent(closestTile, true);
+    while (!tilesToCheck.isEmpty()) {
+      closestTile = tilesToCheck.poll();
+      if (currentBoard.getTileTypeAtLocation(closestTile) == tileType) {
+        // If tile type matches specified tile type, return its coordinate
+        return closestTile;
+      } else {
+        // Add neighboring points if current tile is not a match
+        // Upper neighbor
+        Point currentNeighbor = new Point(closestTile.x, closestTile.y + 1);
+        if (isPointOnBoard(currentNeighbor) && !exploredTiles.containsKey(currentNeighbor)) {
+          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
+        }
+        // Right neighbor
+        currentNeighbor = new Point(closestTile.x + 1, closestTile.y);
+        if (isPointOnBoard(currentNeighbor) && !exploredTiles.containsKey(currentNeighbor)) {
+          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
+        }
+        // Lower neighbor
+        currentNeighbor = new Point(closestTile.x, closestTile.y - 1);
+        if (isPointOnBoard(currentNeighbor) && !exploredTiles.containsKey(currentNeighbor)) {
+          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
+        }
+        // Left neighbor
+        currentNeighbor = new Point(closestTile.x - 1, closestTile.y);
+        if (isPointOnBoard(currentNeighbor) && !exploredTiles.containsKey(currentNeighbor)) {
+          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
         }
       }
     }
-
-    return closestPoint;
+    return currentBoard.getYourLocation();    // If closest tile cannot be found
   }
 
-  /**
-   * Uses breadth-first search to create a list of points for robot to search starting from closest points to farthest.
-   *
-   * @param start Point from where BFS begins
-   * @return  a List of Point objects in BFS order from the specified point
-   */
-  private List<Point> getBoardSearchList(Point start) {
-    List<Point> pointsToSearch = new ArrayList<>();   // return list
-    // Start of BFS
-    Point currentPoint = start;
-    HashMap<Point, Boolean> exploredPoints = new HashMap<Point, Boolean>();
-    PriorityQueue<Point> pointsToAdd = new PriorityQueue<Point>();
-    pointsToAdd.add(currentPoint);
-    exploredPoints.putIfAbsent(currentPoint, true);
-
-    while (!pointsToAdd.isEmpty()) {
-      currentPoint = pointsToAdd.poll();
-      pointsToSearch.add(currentPoint);
-      // Add neighboring points if current tile is not a match
-      // Upper neighbor
-      Point currentNeighbor = new Point(currentPoint.x, currentPoint.y + 1);
-      if (isPointOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
-        pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
-      }
-      // Right neighbor
-      currentNeighbor = new Point(currentPoint.x + 1, currentPoint.y);
-      if (isPointOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
-        pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
-      }
-      // Lower neighbor
-      currentNeighbor = new Point(currentPoint.x, currentPoint.y - 1);
-      if (isPointOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
-        pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
-      }
-      // Left neighbor
-      currentNeighbor = new Point(currentPoint.x - 1, currentPoint.y);
-      if (isPointOnBoard(currentNeighbor) && !exploredPoints.containsKey(currentNeighbor)) {
-        pointsToAdd.add(currentNeighbor);  exploredPoints.putIfAbsent(currentNeighbor, true);
-      }
-    }
-
-    return pointsToSearch;
-  }
-
-  // ROBOT LOGIC AND MATH METHODS
+  // ROBOT LOGIC METHODS
 
   /**
-   * Returns the non-Euclidean distance between two points. Ex: The distance between (3, 4) and (5, 6)
-   * is (5 - 3) + (6 - 4) = 4.
+   * Checks if the specified list contains a gem item type.
    *
-   * @param point1 one point
-   * @param point2 another point
-   * @return the integer distance between the points
+   * @param list to check for
+   * @return true if list contains at least one gem, false otherwise
    */
-  private int distanceBetweenPoints(Point point1, Point point2) {
-    int xDistance = Math.abs(point1.x - point2.x);
-    int yDistance = Math.abs(point1.y - point2.y);
-    return xDistance + yDistance;
+  private boolean listContainsGem(List<InventoryItem> list) {
+    return list.contains(new InventoryItem(ItemType.RUBY)) || list.contains(new InventoryItem(ItemType.EMERALD)) ||
+        list.contains(new InventoryItem(ItemType.DIAMOND));
   }
 
   /**
@@ -326,8 +267,6 @@ public class AssignmentStrategy implements MinePlayerStrategy {
       priority = RobotPriority.SELL;
     } else if (isGemOnGroundHere()) {
       priority = RobotPriority.PICKUP_HERE;
-    } else if (isGemOnGroundOnMap()) {
-      priority = RobotPriority.PICKUP_ELSEWHERE;
     } else if (hasPreferredGemTileHere()) {
       priority = RobotPriority.MINE_HERE;
     } else if (hasPreferredGemTileOnMap() || hasOtherGemTileOnMap()) {
@@ -339,39 +278,68 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     return priority;
   }
 
+  /**
+   * Checks if the robot currently has an autominer in its inventory.
+   *
+   * @return true if robot has autominer, false otherwise
+   */
   private boolean hasAutominer() {
     return autominerCount > 0;
   }
 
+  /**
+   * Checks if there is another gem tile anywhere on the map other than where the robot currently is
+   *
+   * @return true if there exists such a gem tile, false otherwise
+   */
   private boolean hasOtherGemTileOnMap() {
-    Map<Point, List<InventoryItem>> itemsOnGround = currentBoard.getItemsOnGround();
-    for (Point ) {
+    // Works by determining if the closest tile of that type is not at your current location as per the
+    // method documentation in findClosestTileOfTileType()
+    Point currentLocation = currentBoard.getYourLocation();
+    boolean otherGemTileExistsOnMap =
+        !findClosestTileOfTileType(ItemType.RUBY.getResourceTileType()).equals(currentLocation) ||
+        !findClosestTileOfTileType(ItemType.DIAMOND.getResourceTileType()).equals(currentLocation) ||
+        !findClosestTileOfTileType(ItemType.EMERALD.getResourceTileType()).equals(currentLocation);
 
-    }
+    return otherGemTileExistsOnMap;
   }
 
+  /**
+   * Checks if the tile the robot is currently on is a gem tile of the robot's preferred gem type.
+   *
+   * @return true if the preferred gem tile is here, false otherwise
+   */
   private boolean hasPreferredGemTileHere() {
-    // TODO
+    return currentBoard.getTileTypeAtLocation(currentBoard.getYourLocation()) ==
+        preferredItem.getResourceTileType();
   }
 
-  private boolean isGemOnGroundOnMap() {
-    // TODO
-  }
-
+  /**
+   * Gets the items at the point the robot is at and checks if there is a gem item there.
+   *
+   * @return true if there is a gem, false otherwise
+   */
   private boolean isGemOnGroundHere() {
-    // TODO
+    Map<Point, List<InventoryItem>> itemsOnGround = currentBoard.getItemsOnGround();
+    List<InventoryItem> itemsHere = itemsOnGround.get(currentBoard.getYourLocation());
+    return listContainsGem(itemsHere);
   }
 
   private boolean hasFullInventory() {
-    // TODO
+    return robotInventorySize >= maxInventorySize;
   }
 
   private boolean hasLowCharge() {
-    // TODO
+    return (maxRobotCharge * LOW_BATTERY_LEVEL) >= robotCharge;
   }
 
+  /**
+   * Checks if the robot's preferred gem tile type is on the map anywhere other than where the robot is.
+   *
+   * @return true if a gem tile type exists apart from at robot's location, false otherwise
+   */
   private boolean hasPreferredGemTileOnMap() {
-    // TODO
+    return !findClosestTileOfTileType(preferredItem.getResourceTileType()).equals(currentBoard.getYourLocation()) ;
   }
 
   /**
@@ -461,9 +429,10 @@ public class AssignmentStrategy implements MinePlayerStrategy {
   private void resetRobot() {
     robotInventorySize = 0;
     preferredItem = ItemType.DIAMOND;
+    hasHadAutominer = false;
   }
 
   private TileType getTileTypeHere() {
-    return currentBoard.getTileTypeAtLocation(getRobotLocationX(), getRobotLocationY());
+    return currentBoard.getTileTypeAtLocation(currentBoard.getYourLocation());
   }
 }
