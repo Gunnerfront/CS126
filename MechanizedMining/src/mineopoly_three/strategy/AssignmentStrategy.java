@@ -8,7 +8,7 @@ import mineopoly_three.tiles.TileType;
 
 import javax.lang.model.type.NullType;
 import java.awt.Point;
-import java.util.Random;
+import java.util.*;
 
 public class AssignmentStrategy implements MinePlayerStrategy {
   private static final String PLAYER_NAME = "Gunnerside";
@@ -137,8 +137,69 @@ public class AssignmentStrategy implements MinePlayerStrategy {
     return findMoveActionToTile(preferredItem.getResourceTileType());
   }
 
-  private TurnAction findMoveActionToTile(TileType tileType) {
-    // TODO
+  public TurnAction findMoveActionToTile(TileType tileType) {
+    Point closestTilePoint = findClosestTile(tileType);
+
+    if (getRobotLocationX() > closestTilePoint.x) {
+      return TurnAction.MOVE_LEFT;                    // Robot is to the right of this point
+    } else if (getRobotLocationX() < closestTilePoint.x) {
+      return TurnAction.MOVE_RIGHT;                   // Robot is to the left of this point
+    } else if (getRobotLocationY() > closestTilePoint.y) {
+      return TurnAction.MOVE_DOWN;                    // Robot is above this point
+    } else if (getRobotLocationY() < closestTilePoint.y) {
+      return TurnAction.MOVE_UP;                      // Robot is below this point
+    }
+    return null;
+  }
+
+  /**
+   * Uses a breadth-first search to find the point on the board where the closest tile of the provided type is.
+   *
+   * @param tileType the type of tile you are searching for
+   * @return a Point object representing the location of the closest tile
+   */
+  private Point findClosestTile(TileType tileType) {
+    Point closestTile = new Point(getRobotLocationX(), getRobotLocationY());
+    PriorityQueue<Point> tilesToCheck = new PriorityQueue<Point>();
+    HashMap<Point, Boolean> exploredTiles = new HashMap<Point, Boolean>();
+
+    tilesToCheck.add(closestTile);
+    exploredTiles.putIfAbsent(closestTile, true);
+    while (!tilesToCheck.isEmpty()) {
+      closestTile = tilesToCheck.poll();
+      if (currentBoard.getTileTypeAtLocation(closestTile) == tileType) {
+        // If tile type matches specified tile type, return its coordinate
+        return closestTile;
+      } else {
+        // Add neighboring points if current tile is not a match
+        // Upper neighbor
+        Point currentNeighbor = new Point(closestTile.x, closestTile.y + 1);
+        if (ifPointIsOnBoard(currentNeighbor) && !tilesToCheck.contains(currentNeighbor)) {
+          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
+        }
+        // Right neighbor
+        currentNeighbor = new Point(closestTile.x + 1, closestTile.y);
+        if (ifPointIsOnBoard(currentNeighbor) && !tilesToCheck.contains(currentNeighbor)) {
+          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
+        }
+        // Lower neighbor
+        currentNeighbor = new Point(closestTile.x, closestTile.y - 1);
+        if (ifPointIsOnBoard(currentNeighbor) && !tilesToCheck.contains(currentNeighbor)) {
+          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
+        }
+        // Left neighbor
+        currentNeighbor = new Point(closestTile.x - 1, closestTile.y);
+        if (ifPointIsOnBoard(currentNeighbor) && !tilesToCheck.contains(currentNeighbor)) {
+          tilesToCheck.add(currentNeighbor);  exploredTiles.putIfAbsent(currentNeighbor, true);
+        }
+      }
+    }
+    return closestTile;
+  }
+
+  private boolean ifPointIsOnBoard(Point point) {
+    return (point.x >= 0) && (point.y >= 0)
+        && (point.x < boardSize) && (point.y < boardSize);
   }
 
   private TurnAction findMoveActionToItem(ItemType itemType) {
