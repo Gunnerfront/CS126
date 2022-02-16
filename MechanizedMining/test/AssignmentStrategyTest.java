@@ -4,14 +4,14 @@ import mineopoly_three.action.TurnAction;
 import mineopoly_three.game.Economy;
 import mineopoly_three.item.ItemType;
 import mineopoly_three.strategy.MinePlayerStrategy;
-import org.junit.Assert.*;
-
 import mineopoly_three.item.InventoryItem;
 import mineopoly_three.strategy.AssignmentStrategy;
 import mineopoly_three.strategy.PlayerBoardView;
 import mineopoly_three.tiles.TileType;
+
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.awt.*;
 import java.util.*;
@@ -68,10 +68,26 @@ public class AssignmentStrategyTest {
   // Checks that the Direction class has filled values
   public void testGetTurnActionCharge() {
     // Set Up
+    int maxCharge = 0;
     playerBoardView = new PlayerBoardView(tiles, itemsOnGround, thisPlayerLocation, otherPlayerLocation, 0);
     playerStrategy.initialize(boardSize, maxInventorySize, maxCharge, winningScore, playerBoardView,
         thisPlayerLocation, isRedPlayer, random);
-    TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, 0, true);
+    TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, maxCharge, true);
 
+    assertEquals(actual, TurnAction.MOVE_RIGHT);
+  }
+
+  @Test
+  // Checks that the Direction class has filled values
+  public void testGetTurnActionSell() {
+    // Set Up
+    Point thisPlayerLocation = new Point(1, 2);
+    int maxInventorySize = 0;
+    playerBoardView = new PlayerBoardView(tiles, itemsOnGround, thisPlayerLocation, otherPlayerLocation, 0);
+    playerStrategy.initialize(boardSize, maxInventorySize, maxCharge, winningScore, playerBoardView,
+        thisPlayerLocation, isRedPlayer, random);
+    TurnAction actual = playerStrategy.getTurnAction(playerBoardView, economy, maxCharge, true);
+
+    assertEquals(actual, TurnAction.MOVE_DOWN);
   }
 }
