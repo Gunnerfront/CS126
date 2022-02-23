@@ -13,6 +13,7 @@ import student.adventure.WebAdventureGame;
 public class AdventureGameService implements AdventureService {
 
   private static final String MAP_LAYOUT_JSON_FILEPATH = "src/main/resources/uiuc_squirrel_game.json";
+  private static final String imageUrl = "https://www.nationstates.net/images/flags/uploads/ultimate_squirrel_army__759704.jpg";
 
   private final Hashtable<Integer, WebAdventureGame> gameInstances;
   private static int currentInstanceId;
@@ -23,12 +24,20 @@ public class AdventureGameService implements AdventureService {
   }
 
   @Override
+  /**
+   * Resets the service to its initial state, including the instance id classifier.
+   */
   public void reset() {
     gameInstances.clear();
     currentInstanceId = 0;
   }
 
   @Override
+  /**
+   * Creates a new Adventure game and stores it.
+   *
+   * @return the id of the game that was created
+   */
   public int newGame() throws AdventureException {
     MapLayout layout = extractMapLayout();
     WebAdventureGame game = new WebAdventureGame(layout);
@@ -36,6 +45,12 @@ public class AdventureGameService implements AdventureService {
     return currentInstanceId++;
   }
 
+  /**
+   * Reads a JSON file to extract the game map information for the AdventureGame session.
+   *
+   * @return the MapLayout extracted from the JSON file
+   * @throws AdventureException if the JSON file could not be opened
+   */
   private MapLayout extractMapLayout() throws  AdventureException {
     Gson gson = new Gson();
     final String pathname = "src/main/resources/uiuc_squirrel_game.json";
@@ -53,10 +68,16 @@ public class AdventureGameService implements AdventureService {
   }
 
   @Override
+  /**
+   * Returns the state of the game instance associated with the given ID.
+   *
+   * @param id the instance id
+   * @return the current state of the game
+   */
   public GameStatus getGame(int id) {
     WebAdventureGame gameInstance = gameInstances.get(id);
-    GameStatus gameStatus = new GameStatus(false, id, gameInstance.getGameStatusMessage(), "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/220px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg", "",
-        new AdventureState(), gameInstance.getCommandOptions());
+    GameStatus gameStatus = new GameStatus(false, id, gameInstance.getGameStatusMessage(), imageUrl,
+        "", new AdventureState(), gameInstance.getCommandOptions());
     return gameStatus;
   }
 

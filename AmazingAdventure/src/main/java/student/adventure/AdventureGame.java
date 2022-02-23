@@ -1,7 +1,6 @@
 package student.adventure;
 
 import maplayout.*;
-import student.server.GameStatus;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -15,6 +14,7 @@ public class AdventureGame {
   protected static final String TAKE_COMMAND = "take";
   protected static final String DROP_COMMAND = "drop";
   protected static final String PATH_COMMAND = "path";
+  protected static final String START_COMMAND = "START";
 
   // Item flag constants
   protected static final int NO_ITEM = 0;
@@ -49,6 +49,7 @@ public class AdventureGame {
   protected int currentItemOnGround;
   protected final List<Integer> areaTraversalHistory;
   protected String gameStatusMessage;
+  protected boolean shouldApplyAreaAffects;
 
   /**
    * student.adventure.AdventureGame constructor that initializes the first environment variables and the initial player stats variables
@@ -69,6 +70,7 @@ public class AdventureGame {
     this.areaTraversalHistory.add(Integer.valueOf(mapLayout.findMapArea(currentAreaId).getAreaId()));
     this.currentUserInput = "";
     this.gameStatusMessage = "";
+    this.shouldApplyAreaAffects = false;
   }
 
   /**
@@ -96,6 +98,8 @@ public class AdventureGame {
       output = output.concat(mapLayout.getDeathMessage());
     } else if (isAtEnd()) {
       output = output.concat(getCurrentAreaDescription());
+    } else {
+      output = "You have exited the game!";
     }
     output = output.concat(System.lineSeparator());
     return output;
@@ -156,12 +160,14 @@ public class AdventureGame {
    * the threat level of the area affecting the player's injury level.
    */
   protected void applyAreaAffects() {
-    int squirrelAttackChance = ThreadLocalRandom.current().nextInt(0, 11);
-    if (squirrelAttackChance < currentThreatLevel) {
-      gameStatusMessage += ("You get mauled by a squirrel!\n");
-      currentInjuryLevel++;
-    } else {
-      gameStatusMessage += ("You managed to avoid the squirrels, for now.\n");
+    if (shouldApplyAreaAffects) {
+      int squirrelAttackChance = ThreadLocalRandom.current().nextInt(0, 11);
+      if (squirrelAttackChance < currentThreatLevel) {
+        gameStatusMessage += ("You get mauled by a squirrel!\n");
+        currentInjuryLevel++;
+      } else {
+        gameStatusMessage += ("You managed to avoid the squirrels, for now.\n");
+      }
     }
   }
 
@@ -170,12 +176,13 @@ public class AdventureGame {
    */
   protected void reactToPlayerInput( ) {
     String command = currentUserInputTokens[0];
+    shouldApplyAreaAffects = true;
 
     switch (command) {
       case QUIT_COMMAND:
       case EXIT_COMMAND:
-        gameStatusMessage += ("Exiting game...\n");
-        System.exit(0);
+        processExitGame();
+        shouldApplyAreaAffects = false;
         break;
 
       case GO_COMMAND:
@@ -198,9 +205,20 @@ public class AdventureGame {
       case PATH_COMMAND:
         gameStatusMessage += getPlayerPathString();
         break;
+      case START_COMMAND:
+        processFirstTurn();
+        break;
       default:
         gameStatusMessage += "You ponder what it means to '" + command + "'.\n";
     }
+  }
+
+  /**
+   * Tells the player they are exiting the game.
+   */
+  protected void processExitGame() {
+    gameStatusMessage += ("Exiting game...\n");
+    currentInjuryLevel = 999;
   }
 
   /**
@@ -208,20 +226,27 @@ public class AdventureGame {
    * environment variable for threat level is incremented.
    */
   protected void updateArea() {
-    if (hasMoved) {
-      MapArea newArea = mapLayout.findMapArea(currentAreaId);
-      currentThreatLevel = newArea.getInitialThreatLevel();
-      currentItemOnGround = newArea.getItemInArea();
-    } else {
-      currentThreatLevel++;
-    }
+      if (hasMoved) {
+        MapArea newArea = mapLayout.findMapArea(currentAreaId);
+        currentThreatLevel = newArea.getInitialThreatLevel();
+        currentItemOnGround = newArea.getItemInArea();
+      } else {
+        currentThreatLevel++;
+      }
+  }
+
+  /**
+   * Assures that the player will not get affected by environment variables like squirrel threat on the first turn.
+   */
+  private void processFirstTurn() {
+    shouldApplyAreaAffects = false;
   }
 
   /**
    * Checks the player-provided argument for move direction and if valid, moves the player. This function
    * only runs if the player inputs the go command
    */
-  protected void processGoCommand() {
+  private void processGoCommand() {
     String directionName = currentUserInputTokens[1];
     int direction = findValidDirectionId(directionName);
     if (direction == -1) {
@@ -393,7 +418,7 @@ public class AdventureGame {
   /**
    * Outputs to the player their past locations
    */
-  protected String getPlayerPathString() {
+  private String getPlayerPathString() {
     String output = "You take a moment to remember how you got here:";
     output = output.concat(System.lineSeparator());
     output = output.concat(getAreaTraversalHistoryString());
