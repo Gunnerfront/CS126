@@ -55,7 +55,7 @@ public class AdventureGameService implements AdventureService {
   @Override
   public GameStatus getGame(int id) {
     WebAdventureGame gameInstance = gameInstances.get(id);
-    GameStatus gameStatus = new GameStatus(false, id, gameInstance.getGameStatusMessage(), "", "",
+    GameStatus gameStatus = new GameStatus(false, id, gameInstance.getGameStatusMessage(), "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/220px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg", "",
         new AdventureState(), gameInstance.getCommandOptions());
     return gameStatus;
   }
@@ -69,6 +69,8 @@ public class AdventureGameService implements AdventureService {
   @Override
   public void executeCommand(int id, Command command) {
     WebAdventureGame gameInstance = gameInstances.get(id);
+    String fullCommand = command.getCommandName() + " " + command.getCommandValue();
+    gameInstance.performTurn(fullCommand);
   }
 
   @Override

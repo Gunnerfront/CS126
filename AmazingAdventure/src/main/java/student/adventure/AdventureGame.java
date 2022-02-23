@@ -109,6 +109,7 @@ public class AdventureGame {
     String output = "";
     output = output.concat(getCurrentAreaDescription());
     output = output.concat(System.lineSeparator());
+    output = output.concat(System.lineSeparator());
     output = output.concat("Current Injury Sustained: " + currentInjuryLevel + " (death at " + MAX_INJURY_LEVEL + ")");
     output = output.concat(System.lineSeparator());
     output = output.concat("Threat Level: " + currentThreatLevel);
@@ -271,7 +272,7 @@ public class AdventureGame {
   /**
    * Checks the current inventory item and performs the corresponding item's action, if any.
    */
-  protected void processItemAction() {
+  private void processItemAction() {
     switch (inventoryItem) {
       case BUS_KEY:
         useBusKey();

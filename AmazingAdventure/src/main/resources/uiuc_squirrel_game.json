@@ -1,5 +1,5 @@
 {
-  "startMessage": "You have just finished your last final at the CBTF, a day later than the official last day of finals,\nsince you overslept and your teacher gave you a retake. Not a single student in sight, the campus feels very quiet. TOO quiet...\nSuddenly a scurry of squirrels appears in the distance. They look feral, teeth bared, frothing at the mouth. Luckily, they have not noticed you yet.\nYou must act quick, and escape the campus before you are devoured!\n",
+  "startMessage": "You have just finished your last final at the CBTF a day later than the official last day of finals,\nsince you overslept and your teacher gave you a retake. Not a single student in sight, the campus feels very quiet. TOO quiet...\nSuddenly a scurry of squirrels appears in the distance. They look feral, teeth bared, frothing at the mouth. Luckily, they have not noticed you yet.\nYou must act quick, and escape the campus before you are devoured!\n",
   "deathMessage": "GAME OVER. You have died from your injuries!",
   "startAreaId": 0,
   "endAreaId": 15,

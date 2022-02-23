@@ -6,10 +6,11 @@ import java.util.*;
 
 public class WebAdventureGame extends AdventureGame {
   // Lists of argument options for the various commands, used for Web API
-  private static final List<String> EMPTY_ARGUMENT_LIST = new ArrayList<>();
+  private static final List<String> EMPTY_ARGUMENT_LIST = new ArrayList<>(Arrays.asList(""));
   private static final List<String> GO_ARGUMENT_LIST = new ArrayList<>(Arrays.asList(
       "NORTH", "EAST", "SOUTH", "WEST"
   ));
+  private static final String START_COMMAND = "START";
 
   // Web API variables
   private Map<String, List<String>> commandOptions;
@@ -23,8 +24,41 @@ public class WebAdventureGame extends AdventureGame {
   public WebAdventureGame(MapLayout mapLayout) {
     super(mapLayout);
     commandOptions = new HashMap<>();
-    commandOptions.putIfAbsent("Start", EMPTY_ARGUMENT_LIST);
+    commandOptions.putIfAbsent(START_COMMAND, EMPTY_ARGUMENT_LIST);
     loadStartScreenMessage();
+  }
+
+  public void performTurn(String inputCommand) {
+    flushPreviousTurnMessage();
+    loadWebInput(inputCommand);
+    if (isGameOver()) {
+      loadGameOverMessage();
+    } else {
+      applyAreaAffects();
+      reactToPlayerInput();
+      updateArea();
+      loadSituationMessage();
+    }
+  }
+
+  public Map<String, List<String>> getCommandOptions() {
+    return commandOptions;
+  }
+
+  public String getGameStatusMessage() {
+    return gameStatusMessage;
+  }
+
+  private void loadWebInput(String input) {
+    currentUserInput = input;
+    parsePlayerInput();
+    reloadCommands();
+  }
+
+  private void reloadCommands() {
+    if (currentUserInputTokens[0].equalsIgnoreCase(START_COMMAND)) {
+      repopulateCommandOptions();
+    }
   }
 
   private void loadStartScreenMessage() {
@@ -39,10 +73,9 @@ public class WebAdventureGame extends AdventureGame {
 
   private void loadSituationMessage() {
     gameStatusMessage += getSituationMessage();
-    gameStatusMessage = gameStatusMessage.concat("> ");
   }
 
-  private void initializeCommandOptions() {
+  private void repopulateCommandOptions() {
     commandOptions = new Hashtable<>();
     commandOptions.putIfAbsent(USE_COMMAND, EMPTY_ARGUMENT_LIST);
     commandOptions.putIfAbsent(TAKE_COMMAND, EMPTY_ARGUMENT_LIST);
@@ -51,19 +84,7 @@ public class WebAdventureGame extends AdventureGame {
     commandOptions.putIfAbsent(QUIT_COMMAND, EMPTY_ARGUMENT_LIST);
   }
 
-  private void getWebInput() {
-
-  }
-
-  private void endTurn() {
+  private void flushPreviousTurnMessage() {
     gameStatusMessage = "";
-  }
-
-  public Map<String, List<String>> getCommandOptions() {
-    return commandOptions;
-  }
-
-  public String getGameStatusMessage() {
-    return gameStatusMessage;
   }
 }

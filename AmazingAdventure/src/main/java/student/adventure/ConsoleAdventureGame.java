@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class ConsoleAdventureGame extends AdventureGame {
 
-  // Scanner object for player interactivity and getting user commands if in console
+  // Scanner object for player interactivity and getting user commands from console
   private final Scanner scanner;
 
   /**
@@ -38,24 +38,34 @@ public class ConsoleAdventureGame extends AdventureGame {
     displayGameOverMessage();
   }
 
+  /**
+   * Constructs and prints output for the current area and player status
+   */
   private void displaySituation() {
+    gameStatusMessage += System.lineSeparator();
     gameStatusMessage += getSituationMessage();
     gameStatusMessage += "> ";
     displayOutput();
   }
 
+  /**
+   * Constructs and prints output for the end of game message
+   */
   private void displayGameOverMessage() {
     gameStatusMessage += getGameOverMessage();
     displayOutput();
   }
 
+  /**
+   * Constructs and prints output for start message such as available commands and setting
+   */
   private void displayStartScreen() {
     gameStatusMessage += getStartScreenMessage();
     displayOutput();
   }
 
   /**
-   * Waits for the player to hit enter before starting the game
+   * Prompts for enter input and waits for the player to hit enter before starting the game
    */
   private void promptGameStart() {
     String output = "";
@@ -68,7 +78,7 @@ public class ConsoleAdventureGame extends AdventureGame {
   }
 
   /**
-   * Displays the output of the turn to the user to the console and flushes the output string
+   * Displays the accumulated output string to the console and flushes the output string
    */
   private void displayOutput() {
     System.out.print(gameStatusMessage);
