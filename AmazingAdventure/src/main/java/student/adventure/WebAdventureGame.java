@@ -152,4 +152,10 @@ public class WebAdventureGame extends AdventureGame {
   private void flushPreviousTurnMessage() {
     gameStatusMessage = "";
   }
+
+  // METHODS USED FOR TESTING BELOW
+
+  public int getCurrentInjuryLevel() {
+    return currentInjuryLevel;
+  }
 }
