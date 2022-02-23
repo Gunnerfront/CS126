@@ -1,3 +1,5 @@
+package student.adventure;
+
 import maplayout.*;
 
 import java.util.ArrayList;
@@ -54,7 +56,7 @@ public class AdventureGame {
   private final boolean isOnWeb;
 
   /**
-   * AdventureGame constructor that initializes the first environment variables and the initial player stats variables
+   * student.adventure.AdventureGame constructor that initializes the first environment variables and the initial player stats variables
    *
    * @param mapLayout represents the data that the game map is based on
    */
