@@ -53,7 +53,6 @@ public class AdventureGameService implements AdventureService {
    */
   private MapLayout extractMapLayout() throws  AdventureException {
     Gson gson = new Gson();
-    final String pathname = "src/main/resources/uiuc_squirrel_game.json";
     Reader reader;
 
     // Check if JSON file could be opened
@@ -82,12 +81,24 @@ public class AdventureGameService implements AdventureService {
   }
 
   @Override
+  /**
+   * Removes & destroys a game instance with the given ID.
+   *
+   * @param id the instance id
+   * @return false if the instance could not be found and/or was not deleted
+   */
   public boolean destroyGame(int id) {
     AdventureGame removedGame = gameInstances.remove(id);
     return removedGame != null;
   }
 
   @Override
+  /**
+   * Executes a command on the game instance with the given id, changing the game state if applicable.
+   *
+   * @param id the instance id
+   * @param command the issued command
+   */
   public void executeCommand(int id, Command command) {
     WebAdventureGame gameInstance = gameInstances.get(id);
     String fullCommand = command.getCommandName() + " " + command.getCommandValue();
@@ -95,6 +106,11 @@ public class AdventureGameService implements AdventureService {
   }
 
   @Override
+  /**
+   * Not implemented for this game and returns null.
+   *
+   * @return null
+   */
   public SortedMap<String, Integer> fetchLeaderboard() {
     return null;
   }
