@@ -1,10 +1,9 @@
 package student.adventure;
 
 import maplayout.*;
+import student.server.GameStatus;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class AdventureGame {
@@ -16,6 +15,12 @@ public class AdventureGame {
   private static final String TAKE_COMMAND = "take";
   private static final String DROP_COMMAND = "drop";
   private static final String PATH_COMMAND = "path";
+
+  // Lists of argument options for the various commands, used for Web API
+  private static final List<String> EMPTY_ARGUMENT_LIST = new ArrayList<>();
+  private static final List<String> GO_ARGUMENT_LIST = new ArrayList<>(Arrays.asList(
+      "NORTH", "EAST", "SOUTH", "WEST"
+  ));
 
   // Item flag constants
   private static final int NO_ITEM = 0;
@@ -52,15 +57,17 @@ public class AdventureGame {
   // Scanner object for player interactivity and getting user commands if in console
   private final Scanner scanner;
 
-  // If the game is launched in web mode rather than in console
+  // Web API variables
   private final boolean isOnWeb;
+  private Map<String, List<String>> commandOptions;
+  private String gameStatusMessage;
 
   /**
    * student.adventure.AdventureGame constructor that initializes the first environment variables and the initial player stats variables
    *
    * @param mapLayout represents the data that the game map is based on
    */
-  public AdventureGame(MapLayout mapLayout) {
+  public AdventureGame(MapLayout mapLayout, boolean isOnWeb) {
     this.mapLayout = mapLayout;
     this.currentAreaId = mapLayout.getStartAreaId();
     this.inventoryItem = NO_ITEM;
@@ -74,7 +81,11 @@ public class AdventureGame {
     this.areaTraversalHistory = new ArrayList<>();
     this.areaTraversalHistory.add(Integer.valueOf(mapLayout.findMapArea(currentAreaId).getAreaId()));
 
-    this.isOnWeb = false;     // TODO: Change this to get result of function
+    this.isOnWeb = isOnWeb;
+    if (isOnWeb) {
+      commandOptions = new HashMap<>();
+      commandOptions.putIfAbsent("Start", EMPTY_ARGUMENT_LIST);
+    }
   }
 
   /**
@@ -83,6 +94,7 @@ public class AdventureGame {
   public void playGame() {
     displayStartScreen();
     promptGameStart();
+    initializeCommandOptions();
     do {
       displaySituation();
       String playerInput = getInput();
@@ -104,9 +116,11 @@ public class AdventureGame {
     output = output.concat(System.lineSeparator());
     output = output.concat("PLAYER COMMANDS:");
     output = output.concat(System.lineSeparator());
-    output = output.concat(EXIT_COMMAND + ", " + QUIT_COMMAND + ", " + TAKE_COMMAND + " <item>, " + DROP_COMMAND + " "
-        + "<item>, " + GO_COMMAND + " <direction>, " + USE_COMMAND + " <item>, " + PATH_COMMAND);
-    output = output.concat(System.lineSeparator());
+    if (!isOnWeb) {
+      output = output.concat(EXIT_COMMAND + ", " + QUIT_COMMAND + ", " + TAKE_COMMAND + " <item>, " + DROP_COMMAND + " "
+          + "<item>, " + GO_COMMAND + " <direction>, " + USE_COMMAND + " <item>, " + PATH_COMMAND);
+      output = output.concat(System.lineSeparator());
+    }
     displayOutput(output);
   }
 
@@ -115,9 +129,14 @@ public class AdventureGame {
    */
   private void promptGameStart() {
     String output = "";
-    output = output.concat("Press enter to start game!");
-    output = output.concat(System.lineSeparator());
-    output = output.concat("> ");
+    if (isOnWeb) {
+      output = output.concat("Press button to start game!");
+      output = output.concat(System.lineSeparator());
+    } else {
+      output = output.concat("Press enter to start game!");
+      output = output.concat(System.lineSeparator());
+      output = output.concat("> ");
+    }
     displayOutput(output);
     getInput();
   }
@@ -153,7 +172,9 @@ public class AdventureGame {
     output = output.concat(System.lineSeparator());
     output = output.concat("Inventory: " + mapLayout.findItemDescription(inventoryItem));
     output = output.concat(System.lineSeparator());
-    output = output.concat("> ");
+    if (!isOnWeb) {
+      output = output.concat("> ");
+    }
     displayOutput(output);
   }
 
@@ -447,7 +468,7 @@ public class AdventureGame {
    */
   private void displayOutput(String output) {
     if (isOnWeb) {
-      System.out.println("Implement api output!!");
+      updateGameStatusMessage(output);
     } else {
       System.out.print(output);
     }
@@ -476,5 +497,26 @@ public class AdventureGame {
     output = output.concat(getAreaTraversalHistoryString());
     output = output.concat(System.lineSeparator());
     displayOutput(output);
+  }
+
+  private void initializeCommandOptions() {
+    commandOptions = new Hashtable<>();
+    commandOptions.putIfAbsent(USE_COMMAND, EMPTY_ARGUMENT_LIST);
+    commandOptions.putIfAbsent(TAKE_COMMAND, EMPTY_ARGUMENT_LIST);
+    commandOptions.putIfAbsent(PATH_COMMAND, EMPTY_ARGUMENT_LIST);
+    commandOptions.putIfAbsent(GO_COMMAND, GO_ARGUMENT_LIST);
+    commandOptions.putIfAbsent(QUIT_COMMAND, EMPTY_ARGUMENT_LIST);
+  }
+
+  private void updateGameStatusMessage(String output) {
+    gameStatusMessage = output;
+  }
+
+  public Map<String, List<String>> getCommandOptions() {
+    return commandOptions;
+  }
+
+  public String getGameStatusMessage() {
+    return gameStatusMessage;
   }
 }

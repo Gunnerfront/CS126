@@ -21,7 +21,7 @@ public class Main {
         }
 
         MapLayout mapLayout = gson.fromJson(reader, MapLayout.class);
-        AdventureGame game = new AdventureGame(mapLayout);
+        AdventureGame game = new AdventureGame(mapLayout, false);
         game.playGame();
     }
 }

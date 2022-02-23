@@ -29,12 +29,10 @@ public class AdventureGameService implements AdventureService {
 
   @Override
   public int newGame() throws AdventureException {
-    int thisInstanceId = currentInstanceId;
     MapLayout layout = extractMapLayout();
-    AdventureGame game = new AdventureGame(layout);
-    gameInstances.put(thisInstanceId, game);
-    currentInstanceId++;
-    return thisInstanceId;
+    AdventureGame game = new AdventureGame(layout, true);
+    gameInstances.put(currentInstanceId, game);
+    return currentInstanceId++;
   }
 
   private MapLayout extractMapLayout() throws  AdventureException {
@@ -55,7 +53,10 @@ public class AdventureGameService implements AdventureService {
 
   @Override
   public GameStatus getGame(int id) {
-    return null;
+    AdventureGame gameInstance = gameInstances.get(id);
+    GameStatus gameStatus = new GameStatus(false, id, gameInstance.getGameStatusMessage(), "", "",
+        new AdventureState(), gameInstance.getCommandOptions());
+    return gameStatus;
   }
 
   @Override
