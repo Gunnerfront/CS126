@@ -8,12 +8,13 @@ import java.util.*;
 import com.google.gson.Gson;
 import maplayout.MapLayout;
 import student.adventure.AdventureGame;
+import student.adventure.WebAdventureGame;
 
 public class AdventureGameService implements AdventureService {
 
   private static final String MAP_LAYOUT_JSON_FILEPATH = "src/main/resources/uiuc_squirrel_game.json";
 
-  private final Hashtable<Integer, AdventureGame> gameInstances;
+  private final Hashtable<Integer, WebAdventureGame> gameInstances;
   private static int currentInstanceId;
 
   public AdventureGameService() {
@@ -30,7 +31,7 @@ public class AdventureGameService implements AdventureService {
   @Override
   public int newGame() throws AdventureException {
     MapLayout layout = extractMapLayout();
-    AdventureGame game = new AdventureGame(layout, true);
+    WebAdventureGame game = new WebAdventureGame(layout);
     gameInstances.put(currentInstanceId, game);
     return currentInstanceId++;
   }
@@ -53,7 +54,7 @@ public class AdventureGameService implements AdventureService {
 
   @Override
   public GameStatus getGame(int id) {
-    AdventureGame gameInstance = gameInstances.get(id);
+    WebAdventureGame gameInstance = gameInstances.get(id);
     GameStatus gameStatus = new GameStatus(false, id, gameInstance.getGameStatusMessage(), "", "",
         new AdventureState(), gameInstance.getCommandOptions());
     return gameStatus;
@@ -61,12 +62,13 @@ public class AdventureGameService implements AdventureService {
 
   @Override
   public boolean destroyGame(int id) {
-    return false;
+    AdventureGame removedGame = gameInstances.remove(id);
+    return removedGame != null;
   }
 
   @Override
   public void executeCommand(int id, Command command) {
-
+    WebAdventureGame gameInstance = gameInstances.get(id);
   }
 
   @Override

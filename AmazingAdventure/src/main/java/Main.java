@@ -1,6 +1,7 @@
 import com.google.gson.Gson;
 import maplayout.*;
 import student.adventure.AdventureGame;
+import student.adventure.ConsoleAdventureGame;
 
 import java.io.Reader;
 import java.nio.file.Files;
@@ -21,7 +22,7 @@ public class Main {
         }
 
         MapLayout mapLayout = gson.fromJson(reader, MapLayout.class);
-        AdventureGame game = new AdventureGame(mapLayout, false);
+        ConsoleAdventureGame game = new ConsoleAdventureGame(mapLayout);
         game.playGame();
     }
 }
