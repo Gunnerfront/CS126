@@ -455,7 +455,7 @@ public class AdventureGame {
    * Gets the input from the player either from the console, or from the API depending on if the game was
    * launched via the API.
    *
-   * @return
+   * @return the String that the player entered
    */
   private String getInput() {
     if (isOnWeb) {
@@ -466,7 +466,7 @@ public class AdventureGame {
   }
 
   /**
-   * Outputs to the player the player's past locations
+   * Outputs to the player their past locations
    */
   private void displayPlayerPath() {
     String output = "You take a moment to remember how you got here:";
