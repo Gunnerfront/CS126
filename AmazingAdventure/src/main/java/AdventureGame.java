@@ -1,4 +1,7 @@
 import maplayout.*;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -10,6 +13,7 @@ public class AdventureGame {
   private static final String USE_COMMAND = "use";
   private static final String TAKE_COMMAND = "take";
   private static final String DROP_COMMAND = "drop";
+  private static final String PATH_COMMAND = "path";
 
   // Item flag constants
   private static final int NO_ITEM = 0;
@@ -37,13 +41,17 @@ public class AdventureGame {
   private boolean hasMoved;
 
   // Game Environment Variables
-  private MapLayout mapLayout;
+  private final MapLayout mapLayout;
   private int currentAreaId;
   private int currentThreatLevel;
   private int currentItemOnGround;
+  private final List<Integer> areaTraversalHistory;
 
-  // Scanner object for player interactivity and getting user commands
-  private Scanner scanner;
+  // Scanner object for player interactivity and getting user commands if in console
+  private final Scanner scanner;
+
+  // If the game is launched in web mode rather than in console
+  private final boolean isOnWeb;
 
   /**
    * AdventureGame constructor that initializes the first environment variables and the initial player stats variables
@@ -61,6 +69,10 @@ public class AdventureGame {
     this.currentUserInput[1] = "";
     this.currentInjuryLevel = 0;
     this.currentItemOnGround = mapLayout.findMapArea(currentAreaId).getItemInArea();
+    this.areaTraversalHistory = new ArrayList<>();
+    this.areaTraversalHistory.add(Integer.valueOf(mapLayout.findMapArea(currentAreaId).getAreaId()));
+
+    this.isOnWeb = false;     // TODO: Change this to get result of function
   }
 
   /**
@@ -71,7 +83,7 @@ public class AdventureGame {
     promptGameStart();
     do {
       displaySituation();
-      String playerInput = getPlayerInput();
+      String playerInput = getInput();
       parsePlayerInput(playerInput);
       applyAreaAffects();
       reactToPlayerInput();
@@ -85,19 +97,27 @@ public class AdventureGame {
    * Prints into the terminal the map's start message as well as the player commands
    */
   private void displayStartScreen() {
-    System.out.println(mapLayout.getStartMessage());
-    System.out.println("PLAYER COMMANDS:");
-    System.out.println(EXIT_COMMAND + ", " + QUIT_COMMAND + ", " + TAKE_COMMAND + " <item>, " + DROP_COMMAND + " "
-        + "<item>, " + GO_COMMAND + " <direction>, " + USE_COMMAND + " <item>\n");
+    String output = "";
+    output = output.concat(mapLayout.getStartMessage());
+    output = output.concat(System.lineSeparator());
+    output = output.concat("PLAYER COMMANDS:");
+    output = output.concat(System.lineSeparator());
+    output = output.concat(EXIT_COMMAND + ", " + QUIT_COMMAND + ", " + TAKE_COMMAND + " <item>, " + DROP_COMMAND + " "
+        + "<item>, " + GO_COMMAND + " <direction>, " + USE_COMMAND + " <item>, " + PATH_COMMAND);
+    output = output.concat(System.lineSeparator());
+    displayOutput(output);
   }
 
   /**
    * Waits for the player to hit enter before starting the game
    */
   private void promptGameStart() {
-    System.out.println("Press enter to start game!");
-    System.out.print("> ");
-    scanner.nextLine();
+    String output = "";
+    output = output.concat("Press enter to start game!");
+    output = output.concat(System.lineSeparator());
+    output = output.concat("> ");
+    displayOutput(output);
+    getInput();
   }
 
   /**
@@ -105,11 +125,14 @@ public class AdventureGame {
    * if the player is at the end or if they are at the max injury level
    */
   private void displayGameOverMessage() {
-    if (isAtEnd()) {
-      System.out.println(getCurrentAreaDescription());
-    } else if (isPlayerDead()) {
-      System.out.println(mapLayout.getDeathMessage());
+    String output = "";
+    if (isPlayerDead()) {
+      output = output.concat(mapLayout.getDeathMessage());
+    } else if (isAtEnd()) {
+      output = output.concat(getCurrentAreaDescription());
     }
+    output = output.concat(System.lineSeparator());
+    displayOutput(output);
   }
 
   /**
@@ -117,12 +140,19 @@ public class AdventureGame {
    * area threat info, and item info
    */
   private void displaySituation() {
-    System.out.println(getCurrentAreaDescription());
-    System.out.println("Current Injury Sustained: " + currentInjuryLevel + " (death at " + MAX_INJURY_LEVEL + ")");
-    System.out.println("Threat Level: " + currentThreatLevel);
-    System.out.println("Item on ground: " + mapLayout.findItemDescription(currentItemOnGround));
-    System.out.println("Inventory: " + mapLayout.findItemDescription(inventoryItem));
-    System.out.print("> ");
+    String output = "";
+    output = output.concat(getCurrentAreaDescription());
+    output = output.concat(System.lineSeparator());
+    output = output.concat("Current Injury Sustained: " + currentInjuryLevel + " (death at " + MAX_INJURY_LEVEL + ")");
+    output = output.concat(System.lineSeparator());
+    output = output.concat("Threat Level: " + currentThreatLevel);
+    output = output.concat(System.lineSeparator());
+    output = output.concat("Item on ground: " + mapLayout.findItemDescription(currentItemOnGround));
+    output = output.concat(System.lineSeparator());
+    output = output.concat("Inventory: " + mapLayout.findItemDescription(inventoryItem));
+    output = output.concat(System.lineSeparator());
+    output = output.concat("> ");
+    displayOutput(output);
   }
 
   /**
@@ -130,7 +160,7 @@ public class AdventureGame {
    *
    * @return the unedited String containing the player's input
    */
-  private String getPlayerInput() {
+  private String getConsoleInput() {
     return scanner.nextLine();
   }
 
@@ -139,7 +169,7 @@ public class AdventureGame {
    * and goes into the ZERO index, and the optional second word entered is the argument that
    * goes into the ONE index.
    *
-   * @param userInputString
+   * @param userInputString the unparsed player input
    */
   private void parsePlayerInput(String userInputString) {
     userInputString =  userInputString.trim();
@@ -173,10 +203,10 @@ public class AdventureGame {
   private void applyAreaAffects() {
     int squirrelAttackChance = ThreadLocalRandom.current().nextInt(0, 11);
     if (squirrelAttackChance < currentThreatLevel) {
-      System.out.println("You get mauled by a squirrel!");
+      displayOutput("You get mauled by a squirrel!\n");
       currentInjuryLevel++;
     } else {
-      System.out.println("You managed to avoid the squirrels, for now.");
+      displayOutput("You managed to avoid the squirrels, for now.\n");
     }
   }
 
@@ -189,7 +219,7 @@ public class AdventureGame {
     switch (command) {
       case QUIT_COMMAND:
       case EXIT_COMMAND:
-        System.out.println("Exiting game...");
+        displayOutput("Exiting game...\n");
         System.exit(0);
         break;
 
@@ -210,8 +240,11 @@ public class AdventureGame {
         hasMoved = false;
         break;
 
+      case PATH_COMMAND:
+        displayPlayerPath();
+        break;
       default:
-        System.out.println("You ponder what it means to \'" + command + "\'.");
+        displayOutput("You ponder what it means to '" + command + "'.\n");
     }
   }
 
@@ -237,7 +270,7 @@ public class AdventureGame {
     String directionName = currentUserInput[1];
     int direction = findValidDirectionId(directionName);
     if (direction == -1) {
-      System.out.println("You did not go in a valid direction and ran into a squirrel roadblock!");
+      displayOutput("You did not go in a valid direction and ran into a squirrel roadblock!\n");
       hasMoved = false;
     } else {
       movePlayer(direction);
@@ -252,9 +285,9 @@ public class AdventureGame {
   private void processTakeCommand() {
     inventoryItem = mapLayout.findMapArea(currentAreaId).getItemInArea();
     if (inventoryItem != NO_ITEM) {
-      System.out.println("You pick up a " + mapLayout.findItemDescription(inventoryItem));
+      displayOutput("You pick up a " + mapLayout.findItemDescription(inventoryItem) + "\n");
     } else {
-      System.out.println("There is nothing new to pick up here!");
+      displayOutput("There is nothing new to pick up here!\n");
     }
     hasMoved = false;
   }
@@ -267,7 +300,8 @@ public class AdventureGame {
    */
   private void movePlayer(int areaId) {
     currentAreaId = areaId;
-    System.out.println("You successfully moved to a new area!");
+    areaTraversalHistory.add(Integer.valueOf(areaId));
+    displayOutput("You successfully moved to a new area!\n");
   }
 
   /**
@@ -308,9 +342,9 @@ public class AdventureGame {
   private void useBusKey() {
     if (BUS_ENTRANCE_ID == currentAreaId) {
       currentAreaId = BUS_EXIT_ID;
-      System.out.println("You use the bus key and drive on.");
+      displayOutput("You use the bus key and drive on.\n");
     } else {
-      System.out.println("I cannot use this item here.");
+      displayOutput("I cannot use this item here.\n");
     }
   }
 
@@ -319,7 +353,7 @@ public class AdventureGame {
    */
   private void useMedKit() {
     currentInjuryLevel = 0;
-    System.out.println("You use the MedKit on your wounds.");
+    displayOutput("You use the MedKit on your wounds.\n");
   }
 
   /**
@@ -330,7 +364,7 @@ public class AdventureGame {
     if (currentThreatLevel < 0) {
       currentThreatLevel = 0;
     }
-    System.out.println("You use the baseball bat and pummel some squirrels.");
+    displayOutput("You use the baseball bat and pummel some squirrels.\n");
   }
 
   /**
@@ -338,7 +372,7 @@ public class AdventureGame {
    * item is in their inventory.
    */
   private void useNoItem() {
-    System.out.println("You scramble to find a useful item in your backpack but find nothing.");
+    displayOutput("You scramble to find a useful item in your backpack but find nothing.\n");
   }
 
   /**
@@ -384,5 +418,61 @@ public class AdventureGame {
    */
   private boolean isPlayerDead() {
     return currentInjuryLevel >= MAX_INJURY_LEVEL;
+  }
+
+  // NEW METHODS
+
+  /**
+   * Gets a String of names of the areas the player has visited in order from first visited to last visited.
+   *
+   * @return String representing the player's map traversal
+   */
+  private String getAreaTraversalHistoryString() {
+    String output = "";
+    for (int areaNumber = 0; areaNumber < areaTraversalHistory.size(); areaNumber++) {
+      int areaId = areaTraversalHistory.get(areaNumber);
+      String line = (areaNumber + 1) + ": " + mapLayout.findMapArea(areaId).getAreaName() + "\n";
+      output = output.concat(line);
+    }
+    return output;
+  }
+
+  /**
+   * Displays the output to the user, either to the console, or through the API depending on
+   * if the game was launched via the API.
+   *
+   * @param output the String that the player is to see
+   */
+  private void displayOutput(String output) {
+    if (isOnWeb) {
+      System.out.println("Implement api output!!");
+    } else {
+      System.out.print(output);
+    }
+  }
+
+  /**
+   * Gets the input from the player either from the console, or from the API depending on if the game was
+   * launched via the API.
+   *
+   * @return
+   */
+  private String getInput() {
+    if (isOnWeb) {
+      return "Implement api input!!";
+    } else {
+      return getConsoleInput();
+    }
+  }
+
+  /**
+   * Outputs to the player the player's past locations
+   */
+  private void displayPlayerPath() {
+    String output = "You take a moment to remember how you got here:";
+    output = output.concat(System.lineSeparator());
+    output = output.concat(getAreaTraversalHistoryString());
+    output = output.concat(System.lineSeparator());
+    displayOutput(output);
   }
 }

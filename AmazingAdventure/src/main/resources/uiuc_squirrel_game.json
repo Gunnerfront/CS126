@@ -12,6 +12,7 @@
   "areas": [
     {
       "areaId": 0,
+      "areaName": "Bardeen Quad",
       "description": "You are on the Bardeen Quad. The trees around Boneyard Creek are teeming with squirrels.\nThe only paths out appear to be NORTH through Grainger towards the ECEB building, and SOUTH across the bridge towards Green St. and the Union.",
       "initialThreatLevel": 3,
       "itemInArea": 0,
@@ -28,6 +29,7 @@
     },
     {
       "areaId": 1,
+      "areaName": "ECEB Building",
       "description": "You approach the ECEB building. A foul smell emanates from within.\nLuckily, the stench seems to have kept the squirrels out of this area, for now. There are two paths from here:\nEAST towards the Siebel Center, or SOUTH to the Bardeen Quad.",
       "initialThreatLevel": 0,
       "itemInArea": 2,
@@ -44,6 +46,7 @@
     },
     {
       "areaId": 2,
+      "areaName": "Siebel Center for CS",
       "description": "You arrive at the snazzy-looking Siebel Center for CS. There are few squirrels in the area,\nbut the abundance of trees for them to hide in does not bode well. Best to leave soon.\nEither WEST towards the ECEB or SOUTH towards Loomis.",
       "initialThreatLevel": 2,
       "itemInArea": 1,
@@ -60,6 +63,7 @@
     },
     {
       "areaId": 3,
+      "areaName": "Loomis Laboratory",
       "description": "As you near Loomis, you are reminded of the awful experiences you had in the physics classes there.\nAlthough there are no squirrels here, you still get the urge to leave quickly.\nYou can go NORTH towards the Siebel Center or SOUTH towards the ISR.",
       "initialThreatLevel": 0,
       "itemInArea": 0,
@@ -76,6 +80,7 @@
     },
     {
       "areaId": 4,
+      "areaName": "ISR",
       "description": "The usually bustling ISR is eerily quiet. You hear movement in the trees, but cannot see who or what it came from.\nThere remains few supplies in the dining hall, and even fewer at Terrabyte.\nGoing forth, you have the option of NORTH towards Loomis or SOUTH towards Krannert.",
       "initialThreatLevel": 4,
       "itemInArea": 2,
@@ -92,6 +97,7 @@
     },
     {
       "areaId": 5,
+      "areaName": "Krannert Performing Arts Center",
       "description": "The massive structure of the Krannert Performing Arts Center is surrounded by many trees, and with them, plenty of menacing squirrels.\nYou should run soon. Your options are NORTH to the ISR, SOUTH to Allen Hall, or WEST to the Main Quad.",
       "initialThreatLevel": 7,
       "itemInArea": 1,
@@ -112,6 +118,7 @@
     },
     {
       "areaId": 6,
+      "areaName": "Illini Union",
       "description": "The Illini Union appears, next to a quiet Green Street. You look south towards the Main Quad and see an empty,\ndesolate swath of the area laid waste by the squirrel menace. You can either return NORTH to the Bardeen Quad,\nor venture SOUTH towards the scorched Main Quad.",
       "initialThreatLevel": 2,
       "itemInArea": 2,
@@ -128,6 +135,7 @@
     },
     {
       "areaId": 7,
+      "areaName": "Main Quad",
       "description": "At the Main Quad, you marvel in wonder at the sudden emergence of Oak saplings in the ground. A few squirrels gaze at you from afar\nbut none dare attack you, yet. From here, you can wander NORTH towards the Union,\nEAST towards Krannert, SOUTH towards the Foellinger Auditorium, or further WEST to the Transit Plaza Bus Station",
       "initialThreatLevel": 3,
       "itemInArea": 0,
@@ -152,6 +160,7 @@
     },
     {
       "areaId": 14,
+      "areaName": "Illini Union Bookstore",
       "description": "Hoping to find some supplies, you enter the bookstore. However, as soon as you enter, you are AMBUSHED by a scurry of squirrels!!!\nYou see a strange glistening key in the corner of the bookstore, but you will almost certainly get attacked if you stay.\nYou can only go EAST back towards Transit Plaza. Hurry!!",
       "initialThreatLevel": 10,
       "itemInArea": 3,
@@ -164,6 +173,7 @@
     },
     {
       "areaId": 8,
+      "areaName": "Transit Plaza",
       "description": "Approaching Transit Plaza, you notice a bus has broken down, long since abandoned. Maybe you could do something with it if you had a key.\nRegardless, the paths from here lead only WEST, inside the bookstore, or back EAST towards the Main Quad.",
       "initialThreatLevel": 3,
       "itemInArea": 1,
@@ -180,6 +190,7 @@
     },
     {
       "areaId": 9,
+      "areaName": "Foellinger Auditorium",
       "description": "The round shape of the Foellinger Auditorium comes into view. The steps leading inside seem chipped away by some powerful force. You do not dare go inside.\nInstead, you choose between the NORTH direction of the Main Quad, or the direction SOUTH towards the South Quad.",
       "initialThreatLevel": 4,
       "itemInArea": 1,
@@ -196,6 +207,7 @@
     },
     {
       "areaId": 10,
+      "areaName": "South Quad",
       "description": "Gazing around the South Quad, you notice the once beautiful area is riddled with acorns. A few squirrels guard the bigger piles,\nbut do not seem to want to risk losing their stash attacking you. From here, you may go NORTH\ntowards Foellinger, or EAST where the tennis courts are.",
       "initialThreatLevel": 3,
       "itemInArea": 0,
@@ -212,6 +224,7 @@
     },
     {
       "areaId": 11,
+      "areaName": "Tennis Courts",
       "description": "You approach the tennis courts apprehensively, closely watching the surrounding trees for movement.\nA bat-shaped tennis racquet lies on the ground. Back WEST lies the South Quad, and further SOUTH you can see the FAR dorms jutting out into the sky.",
       "initialThreatLevel": 6,
       "itemInArea": 1,
@@ -228,6 +241,7 @@
     },
     {
       "areaId": 12,
+      "areaName": "Allen Hall",
       "description": "WOAH THERE! You nearly scream as you notice a scurry of squirrels coming together to form a much larger mass only 10 feet ahead, near the entrance to Allen Hall.\nA shiny object catches your eye, but if you stay here, death is imminent! You can only find an escape back NORTH towards Krannert.",
       "initialThreatLevel": 10,
       "itemInArea": 3,
@@ -240,6 +254,7 @@
     },
     {
       "areaId": 13,
+      "areaName": "FAR Dorms",
       "description": "The tall, green twin dorms of the Florida Avenue come before you. The end seems to be in sight, as you realize you can escape\njust ahead if you make it to the Horse farm. You can either double back NORTH towards the Tennis Courts\nor attempt escape SOUTH to the Horse Farm.",
       "initialThreatLevel": 9,
       "itemInArea": 0,
@@ -256,6 +271,7 @@
     },
     {
       "areaId": 15,
+      "areaName": "Horse Research Farm",
       "description": "You've finally made it. The Horse Farm comes into view, and with it a group of horses.\nNot only are there no trees to provide cover for stalking squirrels, but you can safely saddle a horse\nand make your way home. As you ride into the sunset, you feel a sudden dread as you remember\nyou left your laptop in your dorm!",
       "initialThreatLevel": 0,
       "itemInArea": 0,

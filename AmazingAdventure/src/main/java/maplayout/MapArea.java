@@ -6,6 +6,8 @@ public class MapArea {
   // There must be a MapArea with a zero id and all other ids must be non-negative
   int areaId;
 
+  String areaName;
+
   // Holds the setting information as well as the possible paths that can be taken to be displayed to the user
   String description;
 
@@ -23,6 +25,8 @@ public class MapArea {
   public int getAreaId() {
     return areaId;
   }
+
+  public String getAreaName() { return areaName; }
 
   public String getDescription() {
     return description;
