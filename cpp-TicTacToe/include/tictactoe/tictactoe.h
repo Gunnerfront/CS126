@@ -1,6 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "modernize-use-nodiscard"
-#pragma ide diagnostic ignored "modernize-use-trailing-return-type"
 #pragma once
 
 #include <string>
@@ -70,8 +67,8 @@ class Board {
     bool CheckColumnsWinner(Player player) const;
     bool CheckRowsWinner(Player player) const;
     bool CheckDiagonalsWinner(Player player) const;
+    bool CheckForwardDiagonal(Player player) const;
+    bool CheckBackwardDiagonal(Player player) const;
 };
 
 }  // namespace tictactoe
-
-#pragma clang diagnostic pop

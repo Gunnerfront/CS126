@@ -1,5 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "modernize-use-trailing-return-type"
 #include <stdexcept>
 #include <string>
 #include <cmath>
@@ -10,6 +8,11 @@ namespace tictactoe {
 
 using std::string;
 
+/**
+ * Creates a square tic tac toe board based on the specified string.
+ * If the board is not a square, throws an exception.
+ * @param board
+ */
 Board::Board(const string& board) : board_(board) {
   CheckBoardSize();
 }
@@ -19,7 +22,7 @@ Board::Board(const string& board) : board_(board) {
  * board string.
  * @return BoardState enum representing the board state
  */
-BoardState Board::EvaluateBoard() const {
+auto Board::EvaluateBoard() const -> BoardState {
   if (IsReachable()) {
     switch (GetWinner()) {
       case Player::Neutral:
@@ -91,7 +94,7 @@ int Board::GetPlayerMarkerCount(Player player) const {
   return x_count;
 }
 
-Player Board::GetGameMarkerID(char marker) {
+auto Board::GetGameMarkerID(char marker) -> Player {
   if (marker == 'x' || marker == 'X') {
     return Player::X;
   } else if (marker == 'o' || marker == 'O') {
@@ -101,7 +104,7 @@ Player Board::GetGameMarkerID(char marker) {
   }
 }
 
-Player Board::GetWinner() const {
+auto Board::GetWinner() const -> Player {
   if (XIsWinner()) {
     return Player::X;
   }
@@ -156,7 +159,9 @@ bool Board::CheckRowsWinner(Player player) const {
 }
 
 bool Board::CheckDiagonalsWinner(Player player) const {
-  // Check forward slash diagonal
+  return CheckForwardDiagonal(player) || CheckBackwardDiagonal(player);
+}
+bool Board::CheckForwardDiagonal(Player player) const {
   size_t marker_count = 0;
   for (size_t position = 0; position < board_size_; position++) {
     Player player_marker =
@@ -166,12 +171,11 @@ bool Board::CheckDiagonalsWinner(Player player) const {
     }
   }
 
-  if (marker_count == board_size_) {
-    return true;
-  }
+  return marker_count == board_size_;
+}
 
-  // Check backslash diagonal
-  marker_count = 0;
+bool Board::CheckBackwardDiagonal(Player player) const {
+  size_t marker_count = 0;
   for (size_t row = 0; row < board_size_; row++) {
     Player player_marker =
         GetGameMarkerID(board_[(board_size_ - 1) + row * (board_size_ - 1)]);
@@ -180,13 +184,7 @@ bool Board::CheckDiagonalsWinner(Player player) const {
     }
   }
 
-  if (marker_count == board_size_) {
-    return true;
-  }
-
-  return false;
-
-  //return CheckForwardDiagonal(player) || CheckBackwardDiagonal(player);
+  return marker_count == board_size_;
 }
 
 }  // namespace tictactoe
