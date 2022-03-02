@@ -15,11 +15,7 @@ enum class BoardState {
   UnreachableState,
 };
 
-enum class Player {
-  Neutral,
-  X,
-  O
-};
+enum class Player { Neutral, X, O };
 
 /**
  * This class can store a Tic-Tac-Toe board and evaluate its state.
@@ -45,30 +41,29 @@ class Board {
   BoardState EvaluateBoard() const;
 
  private:
-    /**
-     * The string representing the state of the board.
-     * Must be a perfect square length
-     */
-    std::string board_;
+  /**
+   * The string representing the state of the board.
+   * Must be a perfect square length
+   */
+  std::string board_;
 
-    /**
-     * The length of one side of a square tic tac toe board
-     */
-    size_t board_size_;
+  /**
+   * The length of one side of a square tic tac toe board
+   */
+  size_t board_size_;
 
-    // Helper functions
-    static Player GetGameMarkerID(char marker);
-    void CheckBoardSize();
-    bool IsReachable() const;
-    int GetPlayerMarkerCount(Player) const;
-    Player GetWinner() const;
-    bool XIsWinner() const;
-    bool OIsWinner() const;
-    bool CheckColumnsWinner(Player player) const;
-    bool CheckRowsWinner(Player player) const;
-    bool CheckDiagonalsWinner(Player player) const;
-    bool CheckForwardDiagonal(Player player) const;
-    bool CheckBackwardDiagonal(Player player) const;
+  // HELPER FUNCTIONS
+  static Player GetGameMarkerID(char marker);
+  void CheckBoardSize();
+  bool IsReachable() const;
+  int GetPlayerMarkerCount(Player player) const;
+  Player GetWinner() const;
+  bool IsWinner(Player player) const;
+  bool CheckColumnsWinner(Player player) const;
+  bool CheckRowsWinner(Player player) const;
+  bool CheckDiagonalsWinner(Player player) const;
+  bool CheckForwardDiagonal(Player player) const;
+  bool CheckBackwardDiagonal(Player player) const;
 };
 
 }  // namespace tictactoe

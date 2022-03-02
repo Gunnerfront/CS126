@@ -10,7 +10,7 @@ using std::string;
 
 /**
  * Creates a square tic tac toe board based on the specified string.
- * If the board is not a square, throws an exception.
+ *  If the board is not a square, throws an exception.
  * @param board
  */
 Board::Board(const string& board) : board_(board) {
@@ -19,7 +19,7 @@ Board::Board(const string& board) : board_(board) {
 
 /**
  * Gets the board state of the proposed tic tac toe board based on the
- * board string.
+ *  board string.
  * @return BoardState enum representing the board state
  */
 auto Board::EvaluateBoard() const -> BoardState {
@@ -41,7 +41,7 @@ auto Board::EvaluateBoard() const -> BoardState {
 
 /**
  * Checks the initialized board string to see if it is a valid representation
- * of a square tic tac toe board. If not, throws invalid_argument().
+ *  of a square tic tac toe board. If not, throws invalid_argument().
  */
 void Board::CheckBoardSize() {
   int board_string_length = board_.length();
@@ -54,7 +54,11 @@ void Board::CheckBoardSize() {
   }
 }
 
-
+/**
+ * Checks if the current board can be reached via a valid game of tic tac
+ *  toe where rules are followed.
+ * @return true if the board is reachable, false otherwise
+ */
 bool Board::IsReachable() const {
   int x_count = GetPlayerMarkerCount(Player::X);
   int o_count = GetPlayerMarkerCount(Player::O);
@@ -83,6 +87,11 @@ bool Board::IsReachable() const {
   return true;
 }
 
+/**
+ * Gets the number of markings on the board for a particular player.
+ * @param player the Player enum of the player to get the markings amount for
+ * @return an int number of markings
+ */
 int Board::GetPlayerMarkerCount(Player player) const {
   int x_count = 0;
   for (size_t idx = 0; idx < board_.length(); ++idx) {
@@ -94,6 +103,11 @@ int Board::GetPlayerMarkerCount(Player player) const {
   return x_count;
 }
 
+/**
+ * Gets the appropriate Player enum for a particular character marker.
+ * @param marker the character on the board string
+ * @return the Player enum representation of the marker
+ */
 auto Board::GetGameMarkerID(char marker) -> Player {
   if (marker == 'x' || marker == 'X') {
     return Player::X;
@@ -104,26 +118,36 @@ auto Board::GetGameMarkerID(char marker) -> Player {
   }
 }
 
+/**
+ * Gets the Player enum of the player which won on the game board. It assumes
+ *  the game board is reachable.
+ * @return the player that won, or Player::Neutral if no winner
+ */
 auto Board::GetWinner() const -> Player {
-  if (XIsWinner()) {
+  if (IsWinner(Player::X)) {
     return Player::X;
   }
-  if (OIsWinner()) {
+  if (IsWinner(Player::O)) {
     return Player::O;
   }
   return Player::Neutral;
 }
 
-bool Board::XIsWinner() const {
-  return CheckColumnsWinner(Player::X) || CheckRowsWinner(Player::X)
-      || CheckDiagonalsWinner(Player::X);
+/**
+ * Checks if the specified Player enum won in columns, rows or diagonals
+ * @param player the Player enum to check for
+ * @return true if player won, false if not
+ */
+bool Board::IsWinner(Player player) const {
+  return CheckColumnsWinner(player) || CheckRowsWinner(player)
+      || CheckDiagonalsWinner(player);
 }
 
-bool Board::OIsWinner() const {
-  return CheckColumnsWinner(Player::O) || CheckRowsWinner(Player::O)
-         || CheckDiagonalsWinner(Player::O);
-}
-
+/**
+ * Checks if a particular player has won in any of the columns.
+ * @param player the Player enum to check for
+ * @return true if player won in any column, false otherwise
+ */
 bool Board::CheckColumnsWinner(Player player) const {
   for (size_t column = 0; column < board_size_; column++) {
     size_t marker_count = 0;
@@ -141,6 +165,11 @@ bool Board::CheckColumnsWinner(Player player) const {
   return false;
 }
 
+/**
+ * Checks if the specified player has won in any of the rows.
+ * @param player the Player enum to check for
+ * @return true if the player has won in any row, false otherwise
+ */
 bool Board::CheckRowsWinner(Player player) const {
   for (size_t row = 0; row < board_size_; row++) {
     size_t marker_count = 0;
@@ -158,14 +187,26 @@ bool Board::CheckRowsWinner(Player player) const {
   return false;
 }
 
+/**
+ * Checks if the specified player has won on any of the diagonals.
+ * @param player the Player enum to check for
+ * @return true if the player won on any of the diagonals
+ */
 bool Board::CheckDiagonalsWinner(Player player) const {
   return CheckForwardDiagonal(player) || CheckBackwardDiagonal(player);
 }
+
+/**
+ * Checks if the specified player has won on the forward leaning diagonal,
+ *  aka the counter diagonal.
+ * @param player the Player enum to check for
+ * @return true if the player has won on the forward diagonal, false otherwise
+ */
 bool Board::CheckForwardDiagonal(Player player) const {
   size_t marker_count = 0;
-  for (size_t position = 0; position < board_size_; position++) {
+  for (size_t row = 0; row < board_size_; row++) {
     Player player_marker =
-        GetGameMarkerID(board_[position + position * board_size_]);
+        GetGameMarkerID(board_[(board_size_ - 1) + row * (board_size_ - 1)]);
     if (player_marker == player) {
       marker_count++;
     }
@@ -174,11 +215,17 @@ bool Board::CheckForwardDiagonal(Player player) const {
   return marker_count == board_size_;
 }
 
+/**
+ * Checks if the specified player has won on the backward leaning diagonal,
+ *  aka the main diagonal.
+ * @param player the Player enum to check for
+ * @return true if the player has won on the backward diagonal, false otherwise
+ */
 bool Board::CheckBackwardDiagonal(Player player) const {
   size_t marker_count = 0;
-  for (size_t row = 0; row < board_size_; row++) {
+  for (size_t position = 0; position < board_size_; position++) {
     Player player_marker =
-        GetGameMarkerID(board_[(board_size_ - 1) + row * (board_size_ - 1)]);
+        GetGameMarkerID(board_[position + position * board_size_]);
     if (player_marker == player) {
       marker_count++;
     }
