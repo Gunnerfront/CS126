@@ -9,17 +9,17 @@ namespace tictactoe {
 using std::string;
 
 /**
- * Creates a square tic tac toe board based on the specified string.
- *  If the board is not a square, throws an exception.
- * @param board
+ * Initializes board and uses CheckBoardSize() to throw exception for an invalid
+ * board.
+ * @param board the String representation of the board
  */
-Board::Board(const string& board) : board_(board) {
+Board::Board(const std::string& board) : board_(board) {
   CheckBoardSize();
 }
 
 /**
- * Gets the board state of the proposed tic tac toe board based on the
- *  board string.
+ * Determines the final board state by checking first if the board is even
+ * reachable in a normal game of tic tac toe, and the checking for winners.
  * @return BoardState enum representing the board state
  */
 auto Board::EvaluateBoard() const -> BoardState {
@@ -41,7 +41,8 @@ auto Board::EvaluateBoard() const -> BoardState {
 
 /**
  * Checks the initialized board string to see if it is a valid representation
- *  of a square tic tac toe board. If not, throws invalid_argument().
+ *  of a square tic tac toe board based on if it is a perfect square length.
+ *  If not, throws invalid_argument().
  */
 void Board::CheckBoardSize() {
   int board_string_length = board_.length();
@@ -56,7 +57,7 @@ void Board::CheckBoardSize() {
 
 /**
  * Checks if the current board can be reached via a valid game of tic tac
- *  toe where rules are followed.
+ *  toe where rules are followed. The rules are documented in inline comments.
  * @return true if the board is reachable, false otherwise
  */
 bool Board::IsReachable() const {
@@ -67,8 +68,8 @@ bool Board::IsReachable() const {
   }
 
   // Verifies that both players have not won
-  bool x_won = XIsWinner();
-  bool o_won = OIsWinner();
+  bool x_won = IsWinner(Player::X);
+  bool o_won = IsWinner(Player::O);
   if (x_won && o_won) {
     return false;
   }
@@ -89,6 +90,8 @@ bool Board::IsReachable() const {
 
 /**
  * Gets the number of markings on the board for a particular player.
+ * Simply iterates through entire board checking for the specified player's
+ * markings.
  * @param player the Player enum of the player to get the markings amount for
  * @return an int number of markings
  */
@@ -145,6 +148,7 @@ bool Board::IsWinner(Player player) const {
 
 /**
  * Checks if a particular player has won in any of the columns.
+ * Iterates through the board string via column-then-row traversal.
  * @param player the Player enum to check for
  * @return true if player won in any column, false otherwise
  */
@@ -167,6 +171,7 @@ bool Board::CheckColumnsWinner(Player player) const {
 
 /**
  * Checks if the specified player has won in any of the rows.
+ * Iterates through the board string via row-then-column traversal.
  * @param player the Player enum to check for
  * @return true if the player has won in any row, false otherwise
  */
@@ -189,6 +194,7 @@ bool Board::CheckRowsWinner(Player player) const {
 
 /**
  * Checks if the specified player has won on any of the diagonals.
+ * Checks for either forward or backward diagonal win.
  * @param player the Player enum to check for
  * @return true if the player won on any of the diagonals
  */
@@ -198,7 +204,8 @@ bool Board::CheckDiagonalsWinner(Player player) const {
 
 /**
  * Checks if the specified player has won on the forward leaning diagonal,
- *  aka the counter diagonal.
+ *  aka the counter diagonal. Iterates for each row and gets the column
+ *  based on distance from the end of one side.
  * @param player the Player enum to check for
  * @return true if the player has won on the forward diagonal, false otherwise
  */
@@ -217,7 +224,8 @@ bool Board::CheckForwardDiagonal(Player player) const {
 
 /**
  * Checks if the specified player has won on the backward leaning diagonal,
- *  aka the main diagonal.
+ *  aka the main diagonal. Simply iterates based on row-then-column traversal
+ *  but where the row and column are the same.
  * @param player the Player enum to check for
  * @return true if the player has won on the backward diagonal, false otherwise
  */

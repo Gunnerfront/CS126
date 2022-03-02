@@ -49,3 +49,8 @@
 1	207	1646194828014601252	src/CMakeFiles/tictactoe.dir/tictactoe.cc.o	f238068777db55ae
 207	210	1646194828018601263	src/libtictactoe.a	11ffd76d467d08cb
 210	401	1646194828206601763	tests/test-tictactoe	1ec19c71d9296d7b
+0	4	0	/home/jakub/Documents/dev/CPP_Code/CS126/cpp-TicTacToe/cmake/CMakeFiles/cmake.verify_globs	783f52c6a1e7f87d
+2	175	1646196506199807405	src/CMakeFiles/tictactoe.dir/tictactoe.cc.o	f238068777db55ae
+175	180	1646196506207807457	src/libtictactoe.a	11ffd76d467d08cb
+2	495	1646196506523809514	tests/CMakeFiles/test-tictactoe.dir/test-tictactoe.cc.o	582b09e6858cd7a2
+495	702	1646196506727810842	tests/test-tictactoe	1ec19c71d9296d7b
