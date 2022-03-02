@@ -1,3 +1,5 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "modernize-use-trailing-return-type"
 #include <stdexcept>
 #include <string>
 #include <cmath>
@@ -49,7 +51,8 @@ void Board::CheckBoardSize() {
   }
 }
 
-auto Board::IsReachable() const -> bool {
+
+bool Board::IsReachable() const {
   int x_count = GetPlayerMarkerCount(Player::X);
   int o_count = GetPlayerMarkerCount(Player::O);
   if (x_count != o_count && x_count != o_count + 1) {
@@ -88,7 +91,7 @@ int Board::GetPlayerMarkerCount(Player player) const {
   return x_count;
 }
 
-Player Board::GetGameMarkerID(char marker) const {
+Player Board::GetGameMarkerID(char marker) {
   if (marker == 'x' || marker == 'X') {
     return Player::X;
   } else if (marker == 'o' || marker == 'O') {
@@ -101,11 +104,11 @@ Player Board::GetGameMarkerID(char marker) const {
 Player Board::GetWinner() const {
   if (XIsWinner()) {
     return Player::X;
-  } else if (OIsWinner()) {
-    return Player::O;
-  } else {
-    return Player::Neutral;
   }
+  if (OIsWinner()) {
+    return Player::O;
+  }
+  return Player::Neutral;
 }
 
 bool Board::XIsWinner() const {
@@ -117,6 +120,7 @@ bool Board::OIsWinner() const {
   return CheckColumnsWinner(Player::O) || CheckRowsWinner(Player::O)
          || CheckDiagonalsWinner(Player::O);
 }
+
 bool Board::CheckColumnsWinner(Player player) const {
   for (size_t column = 0; column < board_size_; column++) {
     size_t marker_count = 0;
@@ -133,6 +137,7 @@ bool Board::CheckColumnsWinner(Player player) const {
 
   return false;
 }
+
 bool Board::CheckRowsWinner(Player player) const {
   for (size_t row = 0; row < board_size_; row++) {
     size_t marker_count = 0;
@@ -149,6 +154,7 @@ bool Board::CheckRowsWinner(Player player) const {
 
   return false;
 }
+
 bool Board::CheckDiagonalsWinner(Player player) const {
   // Check forward slash diagonal
   size_t marker_count = 0;
@@ -179,6 +185,8 @@ bool Board::CheckDiagonalsWinner(Player player) const {
   }
 
   return false;
+
+  //return CheckForwardDiagonal(player) || CheckBackwardDiagonal(player);
 }
 
 }  // namespace tictactoe

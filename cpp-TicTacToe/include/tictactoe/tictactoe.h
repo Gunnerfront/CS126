@@ -1,3 +1,6 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "modernize-use-nodiscard"
+#pragma ide diagnostic ignored "modernize-use-trailing-return-type"
 #pragma once
 
 #include <string>
@@ -57,10 +60,10 @@ class Board {
     size_t board_size_;
 
     // Helper functions
+    static Player GetGameMarkerID(char marker);
     void CheckBoardSize();
     bool IsReachable() const;
     int GetPlayerMarkerCount(Player) const;
-    Player GetGameMarkerID(char marker) const;
     Player GetWinner() const;
     bool XIsWinner() const;
     bool OIsWinner() const;
@@ -70,3 +73,5 @@ class Board {
 };
 
 }  // namespace tictactoe
+
+#pragma clang diagnostic pop
